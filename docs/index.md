@@ -14,6 +14,7 @@ As more modern art move to digital forms, computer graphic rendering techniques 
 (1) What we plan to deliver
 * We plan to create a project that allows for the rendering of watercolor-esque images. The end result of this rendering program will generate images that have non-photorealistic watercolor effects.
 * We plan to observe variations in watercolor style texture generation, where we could experiment with different methods/theory and compare the results. This may prove rather difficult, as how "watercolor-esque" an image is more subjective.
+
 (2) what we hope to deliver
 * If we are able to settle on a set "look" for watercolor style texture generation that isn't too subjective, we could look for optimizations and approximations to speed up the process. (showing graphs with speedup numbers).
 * If possible, we could look to add another challenging aspect of watercolor rendering through reflections, as famous watercolor scenes contain reflections in water and lake surfaces. Our current project aims to add watercolor textures and lighting for mesh objects, but exploring reflections afterwards would be interesting if things go well.

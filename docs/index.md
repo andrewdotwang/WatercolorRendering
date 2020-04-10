@@ -11,15 +11,20 @@ As more modern art move to digital forms, computer graphic rendering techniques 
 
 ## Goals and Deliverables
 
-(1) What we plan to deliver
+What we plan to deliver
 * We plan to create a project that allows for the rendering of watercolor-esque images. The end result of this rendering program will generate images that have non-photorealistic watercolor effects.
 * We plan to observe variations in watercolor style texture generation, where we could experiment with different methods/theory and compare the results. This may prove rather difficult, as how "watercolor-esque" an image is more subjective.
 
-(2) what we hope to deliver
+What we hope to deliver:
 * If we are able to settle on a set "look" for watercolor style texture generation that isn't too subjective, we could look for optimizations and approximations to speed up the process. (showing graphs with speedup numbers).
 * If possible, we could look to add another challenging aspect of watercolor rendering through reflections, as famous watercolor scenes contain reflections in water and lake surfaces. Our current project aims to add watercolor textures and lighting for mesh objects, but exploring reflections afterwards would be interesting if things go well.
 
 ## Schedule
+
+* Week 1: Research on existing papers and familiarize with the underlying techniques and theory.
+* Week 2: Start writing code, playing around with different implementations. Experiment with different methods to see variations in watercolor style texture generation that we like the most.
+* Week 3: Finalize the implementation of features we plan to deliver listed in the Goals and Deliverables section. Ensure that there are no outstanding flaws and bugs. Look into extra features if possible.
+* Week 4: Work on extra features listed in the Goals and Deliverables section if possible. Finalize the project presentation.
 
 ## Resources
 * [Non-Photorealistic Rendering

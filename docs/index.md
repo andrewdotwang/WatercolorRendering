@@ -13,6 +13,7 @@ Our final project idea is in the realm of non-photorealistic rendering. More spe
 
 ## Resources
 * [Non-Photorealistic Rendering
-using Watercolor Inspired Textures and Illumination] (https://www.dimap.ufrn.br/~motta/dim102/Projetos/NPR/Lume_PG01.pdf)
+using Watercolor Inspired Textures and Illumination](https://www.dimap.ufrn.br/~motta/dim102/Projetos/NPR/Lume_PG01.pdf)
 * [ART DIRECTED WATERCOLOR SHADER FOR NON-PHOTOREALISTIC
-RENDERING WITH A FOCUS ON REFLECTIONS] (https://core.ac.uk/download/pdf/154406433.pdf)
+RENDERING WITH A FOCUS ON REFLECTIONS](https://core.ac.uk/download/pdf/154406433.pdf)
+* We will be using code from projects 1 & 3 as a starting point for our renderer!

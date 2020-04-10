@@ -1,4 +1,4 @@
-# 184 Final Project Proposal: Watercolor Texture Rendering
+# 184 Final Project Proposal: Watercolor-esque Non-Photorealistic Rendering
 
 ## Summary & Team members
 Team members: Andrew Wang, Evan Lohn, Johnathan Zhou  

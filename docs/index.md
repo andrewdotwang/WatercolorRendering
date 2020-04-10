@@ -7,6 +7,8 @@ Our final project idea is in the realm of non-photorealistic rendering. More spe
 
 ## Problem Description
 
+As more modern art move to digital forms, computer graphic rendering techniques to mimic traditional hand drawn art forms are becoming popular. One such art form is water colors, where artists draw charming images through the blending of rich and vibrant colors. Our group was especially interested in the non-photorealistic rendering of watercolor-esque images. This marks a contrast from the typical photorealism focus in traditional computer graphics, allowing for more artistic flexibility and expression.  
+
 ## Goals and Deliverables
 
 ## Schedule

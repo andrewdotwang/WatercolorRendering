@@ -30,6 +30,7 @@ using CGL::SceneObjects::BVHNode;
 using CGL::SceneObjects::BVHAccel;
 
 #include "pathtracer.h"
+#include "watercolor.h"
 
 namespace CGL {
 
@@ -193,6 +194,7 @@ public:
   };
 
   PathTracer *pt;
+  WaterColor *wc;
 
   // Configurables //
 

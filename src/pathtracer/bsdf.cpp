@@ -138,6 +138,34 @@ Spectrum GlassBSDF::sample_f(const Vector3D &wo, Vector3D *wi, float *pdf) {
 }
 
 /**
+ * Evaluate Paper BSDF
+ */
+Spectrum PaperBSDF::f(const Vector3D &wo, const Vector3D &wi) {
+  return Spectrum();
+}
+
+/**
+ * Evaluate Paper BSDF
+ */
+Spectrum PaperBSDF::sample_f(const Vector3D &wo, Vector3D *wi, float *pdf) {
+  return Spectrum();
+}
+
+/**
+ * Evaluate Paper BSDF
+ */
+Spectrum PaperBSDF::f_at_point(const Vector3D &wo, const Vector3D &wi, const Vector3D& pt) {
+  return Spectrum();
+}
+
+/**
+ * Evaluate Paper BSDF
+ */
+Spectrum PaperBSDF::sample_f_at_point(const Vector3D &wo, Vector3D *wi, float *pdf, const Vector3D& pt) {
+  return Spectrum();
+}
+
+/**
  * Compute the reflection vector according to incident vector
  */
 void BSDF::reflect(const Vector3D &wo, Vector3D *wi) {}

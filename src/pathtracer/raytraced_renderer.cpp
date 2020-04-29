@@ -77,6 +77,8 @@ RaytracedRenderer::RaytracedRenderer(size_t ns_aa,
   imageTileSize = 32;                     // Size of the rendering tile.
   numWorkerThreads = num_threads;         // Number of threads
   workerThreads.resize(numWorkerThreads);
+
+  wc = new WaterColor();
 }
 
 /**
@@ -87,7 +89,7 @@ RaytracedRenderer::~RaytracedRenderer() {
 
   delete bvh;
   delete pt;
-
+  delete wc;
 }
 
 /**
@@ -278,6 +280,9 @@ void RaytracedRenderer::start_raytracing() {
   pt->camera = camera;
   pt->scene = scene;
 
+  wc->scene = scene;
+  wc->simulate();
+
   if (!render_cell) {
     frameBuffer.clear();
     num_tiles_w = width / imageTileSize + 1;
@@ -360,6 +365,7 @@ void RaytracedRenderer::build_accel() {
   fflush(stdout);
   timer.start();
   bvh = new BVHAccel(primitives);
+  
   timer.stop();
   fprintf(stdout, "Done! (%.4f sec)\n", timer.duration());
 

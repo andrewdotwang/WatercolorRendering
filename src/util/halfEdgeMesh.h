@@ -421,6 +421,11 @@ class Face : public HalfedgeElement {
 
   Matrix4x4 quadric;
 
+  float wetness;
+  Vector2D uv_flow;
+  float pressure;
+  
+
  protected:
   HalfedgeIter _halfedge;  ///< one of the halfedges of this face
   bool _isBoundary;        ///< boundary flag

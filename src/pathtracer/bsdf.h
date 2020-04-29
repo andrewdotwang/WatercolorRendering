@@ -240,6 +240,33 @@ class GlassBSDF : public BSDF {
 }; // class GlassBSDF
 
 /**
+ * Paper BSDF.
+ */
+class PaperBSDF : public BSDF {
+ public:
+
+  PaperBSDF(const Spectrum& transmittance, const Spectrum& reflectance,
+            float roughness, float ior) :
+    transmittance(transmittance), reflectance(reflectance),
+    roughness(roughness), ior(ior) { }
+
+  Spectrum f(const Vector3D& wo, const Vector3D& wi);
+  Spectrum sample_f(const Vector3D& wo, Vector3D* wi, float* pdf);
+  Spectrum get_emission() const { return Spectrum(); }
+  bool is_delta() const { return false; }
+
+  Spectrum f_at_point(const Vector3D& wo, const Vector3D& wi, const Vector3D& pt);
+  Spectrum sample_f_at_point(const Vector3D& wo, Vector3D* wi, float* pdf, const Vector3D& pt);
+ private:
+
+  float ior;
+  float roughness;
+  Spectrum reflectance;
+  Spectrum transmittance;
+
+}; // class GlassBSDF
+
+/**
  * Emission BSDF.
  */
 class EmissionBSDF : public BSDF {

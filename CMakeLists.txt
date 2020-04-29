@@ -50,6 +50,7 @@ set(APPLICATION_SOURCE
     src/pathtracer/bsdf.cpp
     src/pathtracer/pathtracer.cpp
     src/pathtracer/raytraced_renderer.cpp
+    src/pathtracer/watercolor.cpp
 
     # misc
     src/util/sphere_drawing.cpp
@@ -106,6 +107,7 @@ set(APPLICATION_HEADERS
     src/pathtracer/ray.h
     src/pathtracer/raytraced_renderer.h
     src/pathtracer/sampler.h
+    src/pathtracer/watercolor.h
     # misc
     src/util/sphere_drawing.h
     # Application

@@ -113,6 +113,8 @@ class BSDF {
   virtual Spectrum f_custom(const Vector3D& wo, const Vector3D& wi, const Spectrum& refl);
   virtual Spectrum sample_f_custom(const Vector3D& wo, Vector3D* wi, float* pdf, const Spectrum& refl);
 
+  virtual Spectrum get_default_refl();
+
   const HDRImageBuffer* reflectanceMap;
   const HDRImageBuffer* normalMap;
 
@@ -135,6 +137,7 @@ class DiffuseBSDF : public BSDF {
 
   Spectrum f_custom(const Vector3D& wo, const Vector3D& wi, const Spectrum& refl);
   Spectrum sample_f_custom(const Vector3D& wo, Vector3D* wi, float* pdf, const Spectrum& refl);
+  Spectrum get_default_refl();
 
   Spectrum get_emission() const { return Spectrum(); }
   bool is_delta() const { return false; }

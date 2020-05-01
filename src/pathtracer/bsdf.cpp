@@ -84,6 +84,10 @@ Spectrum DiffuseBSDF::sample_f_custom(const Vector3D& wo, Vector3D* wi, float* p
   return f_custom(wo, *wi, refl);
 }
 
+Spectrum DiffuseBSDF::get_default_refl() {
+  return reflectance;
+}
+
 //===============================================================
 // Project 3-2 Code. Don't worry about these for project 3-1
 //===============================================================
@@ -187,6 +191,7 @@ bool BSDF::refract(const Vector3D &wo, Vector3D *wi, float ior) { return true; }
 Spectrum BSDF::f_custom(const Vector3D& wo, const Vector3D& wi, const Spectrum& refl) {return f(wo, wi); }
 Spectrum BSDF::sample_f_custom(const Vector3D& wo, Vector3D* wi, float* pdf, const Spectrum& refl) {return sample_f(wo, wi, pdf);}
 
+Spectrum BSDF::get_default_refl(){ return Spectrum(); }
 /**
  * Evalutate Emission BSDF (Light Source)
  */

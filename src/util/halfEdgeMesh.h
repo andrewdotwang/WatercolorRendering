@@ -423,7 +423,8 @@ class Face : public HalfedgeElement {
   Vector2D uv_flow;
   float pressure;
 
-  std::vector<float> pigments;
+  std::vector<float> pigments_g;
+  std::vector<float> pigments_d;
 
   Vector3D reflectance;
   Vector3D transmittance;

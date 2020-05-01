@@ -38,6 +38,7 @@ Mesh::Mesh(const HalfedgeMesh& mesh, BSDF* bsdf) {
     indices.push_back(vertexLabels[&*h->vertex()]);
     indices.push_back(vertexLabels[&*h->next()->vertex()]);
     indices.push_back(vertexLabels[&*h->next()->next()->vertex()]);
+    wc_info.push_back(WcInfo(f->reflectance, f->transmittance));
   }
 
   this->bsdf = bsdf;
@@ -51,7 +52,8 @@ vector<Primitive*> Mesh::get_primitives() const {
   for (size_t i = 0; i < num_triangles; ++i) {
     Triangle* tri = new Triangle(this, indices[i * 3],
                                        indices[i * 3 + 1],
-                                       indices[i * 3 + 2]);
+                                       indices[i * 3 + 2],
+                                       wc_info[i]);
     primitives.push_back(tri);
   }
   return primitives;

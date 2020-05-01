@@ -3,6 +3,7 @@
 
 #include "object.h"
 #include "primitive.h"
+#include "pathtracer/watercolor.h"
 
 namespace CGL { namespace SceneObjects {
 
@@ -24,7 +25,7 @@ public:
    * \param v2 index of triangle vertex in the mesh's attribute arrays
    * \param v3 index of triangle vertex in the mesh's attribute arrays
    */
-  Triangle(const Mesh* mesh, size_t v1, size_t v2, size_t v3);
+  Triangle(const Mesh* mesh, size_t v1, size_t v2, size_t v3, WcInfo info);
 
   /**
    * Get the world space bounding box of the triangle.
@@ -61,6 +62,8 @@ public:
    */
   BSDF* get_bsdf() const { return bsdf; }
 
+  WcInfo get_wc_info() const { return wc_info; }
+
   /**
    * Draw with OpenGL (for visualizer)
    */
@@ -75,6 +78,8 @@ private:
 
   Vector3D p1, p2, p3;
   Vector3D n1, n2, n3;
+
+  WcInfo wc_info; // Might want to make this a property of each point and do barycentric?
   
   BSDF* bsdf;
 

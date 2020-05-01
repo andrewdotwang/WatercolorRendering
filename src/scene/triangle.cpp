@@ -6,7 +6,7 @@
 namespace CGL {
 namespace SceneObjects {
 
-Triangle::Triangle(const Mesh *mesh, size_t v1, size_t v2, size_t v3) {
+Triangle::Triangle(const Mesh *mesh, size_t v1, size_t v2, size_t v3, WcInfo info) {
   p1 = mesh->positions[v1];
   p2 = mesh->positions[v2];
   p3 = mesh->positions[v3];
@@ -18,6 +18,7 @@ Triangle::Triangle(const Mesh *mesh, size_t v1, size_t v2, size_t v3) {
   bbox.expand(p3);
 
   bsdf = mesh->get_bsdf();
+  wc_info = info; // I'm copying... seems better as long as this doesn't get too big
 }
 
 BBox Triangle::get_bbox() const { return bbox; }

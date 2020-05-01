@@ -32,6 +32,19 @@ namespace CGL {
     	void simulate_mesh(GLScene::Mesh* elem);
     };
 
+	struct WcInfo {
+
+	  // Default constructor.
+	  WcInfo() : WcInfo(Vector3D(), Vector3D()) { }
+
+	  WcInfo(Vector3D r, Vector3D t)
+	      : reflectance(r), transmittance(t) {}
+
+	  Vector3D reflectance;
+	  Vector3D transmittance;
+
+	};
+
 }  // namespace CGL
 
 #endif  // CGL_RAYTRACER_H

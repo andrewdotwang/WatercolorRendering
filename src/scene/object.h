@@ -3,6 +3,7 @@
 
 #include "util/halfEdgeMesh.h"
 #include "scene.h"
+#include "pathtracer/watercolor.h"
 
 namespace CGL { namespace SceneObjects {
 
@@ -41,6 +42,7 @@ class Mesh : public SceneObject {
   BSDF* bsdf; ///< BSDF of surface material
 
   vector<size_t> indices;  ///< triangles defined by indices
+  vector<WcInfo> wc_info;
 
 };
 

@@ -14,6 +14,7 @@
 
 #include "GL/glew.h"
 
+#include "scene/gl_scene/scene.h"
 #include "scene/sphere.h"
 #include "scene/triangle.h"
 #include "scene/light.h"
@@ -141,6 +142,17 @@ void RaytracedRenderer::set_camera(Camera *camera) {
     state = READY;
   }
 
+}
+
+/**
+ * Simulates the watercolor effects.
+ * \param scene basically just holds the halfedgemesh
+ */
+void RaytracedRenderer::run_wc_simulation(GLScene::Scene *scene) {
+  std::vector<GLScene::SceneObject *> wc_sim_elems = scene->get_wc_objects();
+  for (GLScene::SceneObject *simulatable: wc_sim_elems) {
+    wc->simulate(simulatable);
+  }
 }
 
 /**
@@ -280,8 +292,6 @@ void RaytracedRenderer::start_raytracing() {
   pt->camera = camera;
   pt->scene = scene;
 
-  wc->scene = scene;
-  wc->simulate();
 
   if (!render_cell) {
     frameBuffer.clear();

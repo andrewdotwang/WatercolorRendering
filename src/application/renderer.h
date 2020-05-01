@@ -6,6 +6,7 @@
 
 #include "application/renderer.h"
 
+#include "scene/gl_scene/scene.h"
 #include "scene/scene.h"
 using CGL::SceneObjects::Scene;
 
@@ -31,6 +32,8 @@ public:
      * \param camera the camera to use in rendering
      */
     virtual void set_camera(Camera* camera) = 0;
+
+    virtual void run_wc_simulation(GLScene::Scene *scene) = 0;
 
     /**
      * Sets the pathtracer's frame size. If in a running state (VISUALIZE,

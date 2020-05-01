@@ -419,11 +419,18 @@ class Face : public HalfedgeElement {
    */
   Vector3D normal(void) const;
 
-  Matrix4x4 quadric;
-
   float wetness;
   Vector2D uv_flow;
   float pressure;
+
+  std::vector<float> pigments;
+
+  Vector3D reflectance;
+  Vector3D transmittance;
+
+  Matrix4x4 quadric;
+
+
   
 
  protected:

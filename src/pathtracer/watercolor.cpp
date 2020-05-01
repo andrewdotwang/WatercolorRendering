@@ -3,6 +3,7 @@
 #include "scene/light.h"
 #include "scene/sphere.h"
 #include "scene/triangle.h"
+#include "scene/gl_scene/mesh.h"
 
 
 using namespace CGL::SceneObjects;
@@ -10,8 +11,6 @@ using namespace CGL::SceneObjects;
 namespace CGL {
 
 WaterColor::WaterColor() {
-  gridSampler = new UniformGridSampler2D();
-  hemisphereSampler = new UniformHemisphereSampler3D();
 
   tm_gamma = 2.2f;
   tm_level = 1.0f;
@@ -20,8 +19,6 @@ WaterColor::WaterColor() {
 }
 
 WaterColor::~WaterColor() {
-  delete gridSampler;
-  delete hemisphereSampler;
 }
 
 void WaterColor::set_frame_size(size_t width, size_t height) {
@@ -39,8 +36,10 @@ void WaterColor::clear() {
   sampleCountBuffer.resize(0, 0);
 }
 
-void WaterColor::simulate() {
-	
+void WaterColor::simulate(GLScene::SceneObject *elem) {
+	  if (dynamic_cast<GLScene::Mesh*>(elem)) { 
+      
+    }
 }
 
 void WaterColor::write_to_framebuffer(ImageBuffer &framebuffer, size_t x0,

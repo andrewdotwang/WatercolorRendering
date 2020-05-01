@@ -42,7 +42,7 @@ namespace CGL {
          */
         void clear();
 
-        void simulate();
+        void simulate(GLScene::SceneObject *elem);
 
         /**
          * Trace an ray in the scene.

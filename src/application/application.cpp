@@ -617,6 +617,8 @@ void Application::set_up_pathtracer() {
   renderer->set_scene(scene->get_static_scene());
   renderer->set_frame_size(screenW, screenH);
 
+  renderer->run_wc_simulation(scene);
+
 }
 
 Matrix4x4 Application::get_world_to_3DH() {

@@ -75,6 +75,15 @@ Spectrum DiffuseBSDF::sample_f(const Vector3D &wo, Vector3D *wi, float *pdf) {
   return f(wo, *wi);
 }
 
+Spectrum DiffuseBSDF::f_custom(const Vector3D& wo, const Vector3D& wi, const Spectrum& refl) {
+  return refl/PI;
+}
+
+Spectrum DiffuseBSDF::sample_f_custom(const Vector3D& wo, Vector3D* wi, float* pdf, const Spectrum& refl) {
+  *wi = sampler.get_sample(pdf);
+  return f_custom(wo, *wi, refl);
+}
+
 //===============================================================
 // Project 3-2 Code. Don't worry about these for project 3-1
 //===============================================================
@@ -174,6 +183,9 @@ void BSDF::reflect(const Vector3D &wo, Vector3D *wi) {}
  * Compute the refraction vector according to incident vector and ior
  */
 bool BSDF::refract(const Vector3D &wo, Vector3D *wi, float ior) { return true; }
+
+Spectrum BSDF::f_custom(const Vector3D& wo, const Vector3D& wi, const Spectrum& refl) {return f(wo, wi); }
+Spectrum BSDF::sample_f_custom(const Vector3D& wo, Vector3D* wi, float* pdf, const Spectrum& refl) {return sample_f(wo, wi, pdf);}
 
 /**
  * Evalutate Emission BSDF (Light Source)

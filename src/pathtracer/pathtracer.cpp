@@ -86,7 +86,7 @@ PathTracer::estimate_direct_lighting_hemisphere(const Ray &r,
 
       if ((em[0] > 0) || (em[1] > 0) || (em[2] > 0)) {
         // bsdf of surface
-        refl = isect.bsdf->f(w_out, samp);
+        refl = isect.bsdf->f_custom(w_out, samp, Spectrum(0.5f, 0.5f, 0.5f));
 
         //cosine of the incoming ray
         cos_term = cos_theta(samp.unit());
@@ -150,7 +150,7 @@ PathTracer::estimate_direct_lighting_importance(const Ray &r,
 
         //if (fabs(isect2.t - dist_to_light) < EPS_F) {
           // bsdf of surface
-          refl = isect.bsdf->f(w_out, samp);
+          refl = isect.bsdf->f_custom(w_out, samp, Spectrum(0.5f, 0.5f, 0.5f));
 
           //cosine of the incoming ray
           cos_term = cos_theta(samp.unit());
@@ -215,7 +215,7 @@ Spectrum PathTracer::at_least_one_bounce_radiance(const Ray &r,
 
   Vector3D samp, w_in;
   float pdf;
-  Spectrum em = isect.bsdf->sample_f(w_out, &samp, &pdf);
+  Spectrum em = isect.bsdf->sample_f_custom(w_out, &samp, &pdf, Spectrum(0.5f, 0.5f, 0.5f));
 
   w_in = o2w * samp;
   Ray r2(hit_p + EPS_D * w_in, w_in, INF_D, r.depth - 1);

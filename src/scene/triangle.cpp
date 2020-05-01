@@ -100,7 +100,9 @@ bool Triangle::intersect(const Ray &r, Intersection *isect) const {
   isect->t = t;
   isect->n = (alpha * n1) + (b1 * n2) + (b2 * n3);
   isect->primitive = this;
+
   isect->bsdf = get_bsdf();
+
   r.max_t = t;
 
 

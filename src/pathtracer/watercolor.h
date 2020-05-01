@@ -32,6 +32,8 @@ namespace CGL {
     	void simulate_mesh(GLScene::Mesh* elem);
     };
 
+    // I think we actually only need reflectance for rendering, probably could
+    // remove transmittance unless we're doing translucent wet paper
 	struct WcInfo {
 
 	  // Default constructor.

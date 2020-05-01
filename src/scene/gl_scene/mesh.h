@@ -63,6 +63,7 @@ class Mesh : public SceneObject, public MeshView {
 
   BSDF *get_bsdf();
   SceneObjects::SceneObject *get_static_object();
+  HalfedgeMesh& get_underlying_mesh();
 
   // MeshView methods
   void collapse_selected_edge();

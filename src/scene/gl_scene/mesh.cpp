@@ -507,6 +507,11 @@ MeshView* Mesh::get_mesh_view() {
   return this;
 }
 
+// a hack
+HalfedgeMesh& Mesh::get_underlying_mesh() {
+  return mesh;
+}
+
 BSDF* Mesh::get_bsdf() {
   return bsdf;
 }

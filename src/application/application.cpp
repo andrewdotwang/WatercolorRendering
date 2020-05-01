@@ -617,7 +617,8 @@ void Application::set_up_pathtracer() {
   renderer->set_scene(scene->get_static_scene());
   renderer->set_frame_size(screenW, screenH);
 
-  renderer->run_wc_simulation(scene);
+  //TODO: uncomment to actually try running the simulation!
+  //renderer->run_wc_simulation(scene);
 
 }
 

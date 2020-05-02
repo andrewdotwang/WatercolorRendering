@@ -19,6 +19,9 @@ using CGL::SceneObjects::EnvironmentLight;
 using CGL::SceneObjects::BVHNode;
 using CGL::SceneObjects::BVHAccel;
 
+#include <unordered_set>
+#include <queue>
+
 namespace CGL {
 
     class WaterColor {
@@ -30,6 +33,7 @@ namespace CGL {
 
     private:
     	void simulate_mesh(GLScene::Mesh* elem);
+    	std::vector<FaceIter> get_patch(HalfedgeMesh& mesh, int num_faces, bool visible);
     };
 
     // I think we actually only need reflectance for rendering, probably could

@@ -614,11 +614,13 @@ void Application::to_edit_mode() {
 void Application::set_up_pathtracer() {
   if (mode != EDIT_MODE) return;
 
-  //TODO: uncomment to actually try running the simulation!
+  renderer->set_camera(&camera); // do this first so we can use the camera position in wc simulation
+
+  // uncomment to run the watercolor simulation!
   renderer->run_wc_simulation(scene);
 
-  renderer->set_camera(&camera);
-  renderer->set_scene(scene->get_static_scene());
+  renderer->set_scene(scene->get_static_scene()); // do this third so wc simulation results get
+                                                  // captured when the static scene is created.
   renderer->set_frame_size(screenW, screenH);
 
 

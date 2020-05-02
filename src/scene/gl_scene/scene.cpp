@@ -152,7 +152,8 @@ std::vector<SceneObject *> Scene::get_wc_objects() {
     //we would likely want a new interface for "watercolorable" objects
     // that defines the various functions needed to (a) simulate and (b) render simulated
     // objects.
-    if (dynamic_cast<GLScene::Mesh*>(obj)) { 
+    if (dynamic_cast<GLScene::Mesh*>(obj) && obj->get_name().compare("Mesh") == 0) { 
+      cout << "adding " << obj->get_name() << " to watercolor objects" << endl;
       ret.push_back(obj);
     }
   }

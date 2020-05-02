@@ -163,7 +163,7 @@ class Application : public Renderer {
   void init_camera(Collada::CameraInfo& camera, const Matrix4x4& transform);
   GLScene::SceneLight *init_light(Collada::LightInfo& light, const Matrix4x4& transform);
   GLScene::SceneObject *init_sphere(Collada::SphereInfo& polymesh, const Matrix4x4& transform);
-  GLScene::SceneObject *init_polymesh(Collada::PolymeshInfo& polymesh, const Matrix4x4& transform);
+  GLScene::SceneObject *init_polymesh(Collada::PolymeshInfo& polymesh, const Matrix4x4& transform, string name);
   void init_material(Collada::MaterialInfo& material);
 
   void set_scroll_rate();

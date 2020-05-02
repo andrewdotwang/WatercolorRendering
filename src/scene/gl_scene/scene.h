@@ -119,6 +119,8 @@ class SceneObject {
    * expects all the objects to be
    */
   virtual SceneObjects::SceneObject *get_static_object() = 0;
+
+  virtual std::string get_name() { return "default_name"; }
 };
 
 

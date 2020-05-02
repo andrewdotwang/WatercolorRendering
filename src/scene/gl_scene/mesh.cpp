@@ -17,7 +17,7 @@ static const double low_threshold  = .1;
 static const double mid_threshold  = .2;
 static const double high_threshold = 1.0 - low_threshold;
 
-Mesh::Mesh(Collada::PolymeshInfo& polyMesh, const Matrix4x4& transform) {
+Mesh::Mesh(Collada::PolymeshInfo& polyMesh, const Matrix4x4& transform, string obj_name) {
 
   // Build halfedge mesh from polygon soup
   vector< vector<size_t> > polygons;
@@ -38,6 +38,8 @@ Mesh::Mesh(Collada::PolymeshInfo& polyMesh, const Matrix4x4& transform) {
   } else {
     bsdf = new DiffuseBSDF(Spectrum(0.5f,0.5f,0.5f));
   }
+
+  name = obj_name;
 }
 
 void Mesh::render_in_opengl() const {

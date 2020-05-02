@@ -38,7 +38,7 @@ class MeshFeature {
 class Mesh : public SceneObject, public MeshView {
  public:
 
-  Mesh(Collada::PolymeshInfo& polyMesh, const Matrix4x4& transform);
+  Mesh(Collada::PolymeshInfo& polyMesh, const Matrix4x4& transform, string obj_name);
 
   ~Mesh();
 
@@ -72,6 +72,8 @@ class Mesh : public SceneObject, public MeshView {
   void upsample();
   void downsample();
   void resample();
+
+  string get_name() { return name; }
 
  private:
 
@@ -114,6 +116,8 @@ class Mesh : public SceneObject, public MeshView {
 
   // material
   BSDF* bsdf;
+
+  string name;
 };
 
 } // namespace GLScene

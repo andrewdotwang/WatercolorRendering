@@ -250,7 +250,7 @@ void Application::load(SceneInfo* sceneInfo) {
         break;
       case Collada::Instance::POLYMESH:
         objects.push_back(
-          init_polymesh(static_cast<PolymeshInfo&>(*instance), transform));
+          init_polymesh(static_cast<PolymeshInfo&>(*instance), transform, instance->name));
         break;
       case Collada::Instance::MATERIAL:
         init_material(static_cast<MaterialInfo&>(*instance));
@@ -340,8 +340,8 @@ GLScene::SceneObject *Application::init_sphere(
 }
 
 GLScene::SceneObject *Application::init_polymesh(
-    PolymeshInfo& polymesh, const Matrix4x4& transform) {
-  return new GLScene::Mesh(polymesh, transform);
+    PolymeshInfo& polymesh, const Matrix4x4& transform, string name) {
+  return new GLScene::Mesh(polymesh, transform, name);
 }
 
 void Application::set_scroll_rate() {
@@ -616,7 +616,7 @@ void Application::set_up_pathtracer() {
 
   //TODO: uncomment to actually try running the simulation!
   renderer->run_wc_simulation(scene);
-  
+
   renderer->set_camera(&camera);
   renderer->set_scene(scene->get_static_scene());
   renderer->set_frame_size(screenW, screenH);

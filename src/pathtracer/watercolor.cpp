@@ -22,7 +22,9 @@ WaterColor::~WaterColor() {
 // dispatches to the appropriate method for simulating watercolor dispersion
 // based on the type of GLScene::SceneObject
 void WaterColor::simulate(GLScene::SceneObject *elem) {
+    //cout << "ssuh" << endl;
 	  if (dynamic_cast<GLScene::Mesh*>(elem)) { 
+      //cout << "hulloooooooooooooooooooooooooooooooooooooooooooo" << endl;
       simulate_mesh((GLScene::Mesh*)elem);
     }
 }
@@ -49,6 +51,7 @@ void WaterColor::simulate_mesh(GLScene::Mesh* elem) {
   for( FaceIter f = mesh.facesBegin(); f != mesh.facesEnd(); f++ )
   {
     f->wetness = (float)(random_uniform());
+    f->reflectance = Vector3D(0.6f, 0.1f, 0.1f);
     // do something interesting with v
   }
 }

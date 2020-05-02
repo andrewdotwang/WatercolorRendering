@@ -613,12 +613,15 @@ void Application::to_edit_mode() {
 
 void Application::set_up_pathtracer() {
   if (mode != EDIT_MODE) return;
+
+  //TODO: uncomment to actually try running the simulation!
+  renderer->run_wc_simulation(scene);
+  
   renderer->set_camera(&camera);
   renderer->set_scene(scene->get_static_scene());
   renderer->set_frame_size(screenW, screenH);
 
-  //TODO: uncomment to actually try running the simulation!
-  //renderer->run_wc_simulation(scene);
+
 
 }
 

@@ -62,7 +62,7 @@ public:
    */
   BSDF* get_bsdf() const { return bsdf; }
 
-  WcInfo get_wc_info() const { return wc_info; }
+  Spectrum get_wc_refl() const { return wc_refl; }
 
   /**
    * Draw with OpenGL (for visualizer)
@@ -79,7 +79,7 @@ private:
   Vector3D p1, p2, p3;
   Vector3D n1, n2, n3;
 
-  WcInfo wc_info; // Might want to make this a property of each point and do barycentric?
+  Spectrum wc_refl; // Might want to make this a property of each point and do barycentric?
   
   BSDF* bsdf;
 

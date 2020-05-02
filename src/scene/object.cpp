@@ -38,6 +38,9 @@ Mesh::Mesh(const HalfedgeMesh& mesh, BSDF* bsdf) {
     indices.push_back(vertexLabels[&*h->vertex()]);
     indices.push_back(vertexLabels[&*h->next()->vertex()]);
     indices.push_back(vertexLabels[&*h->next()->next()->vertex()]);
+    // if (f->reflectance[0] != 0.6f) {
+    //   cout << "actually" << f->reflectance[0] << endl;
+    // }
     wc_info.push_back(WcInfo(f->reflectance, f->transmittance));
   }
 

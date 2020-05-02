@@ -62,6 +62,10 @@ class Primitive {
    */
   virtual void drawOutline(const Color& c, float alpha) const = 0;
 
+  virtual Spectrum get_wc_refl() const {
+    return get_bsdf()->get_default_refl();
+  }
+
 };
 
 } // namespace SceneObjects

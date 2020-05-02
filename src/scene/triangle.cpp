@@ -18,7 +18,7 @@ Triangle::Triangle(const Mesh *mesh, size_t v1, size_t v2, size_t v3, WcInfo inf
   bbox.expand(p3);
 
   bsdf = mesh->get_bsdf();
-  wc_info = info; // I'm copying... seems better as long as this doesn't get too big
+  wc_refl = info.reflectance; // I'm copying... seems better as long as this doesn't get too big
 }
 
 BBox Triangle::get_bbox() const { return bbox; }

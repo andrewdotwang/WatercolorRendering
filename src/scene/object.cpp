@@ -41,7 +41,7 @@ Mesh::Mesh(const HalfedgeMesh& mesh, BSDF* bsdf) {
     // if (f->reflectance[0] != 0.6f) {
     //   cout << "actually" << f->reflectance[0] << endl;
     // }
-    wc_info.push_back(WcInfo(f->reflectance, f->transmittance));
+    wc_info.push_back(WcInfo(f->reflectance, f->transmittance, f->is_wc));
   }
 
   this->bsdf = bsdf;

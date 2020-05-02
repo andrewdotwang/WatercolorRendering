@@ -50,8 +50,9 @@ void WaterColor::simulate_mesh(GLScene::Mesh* elem) {
   */
   for( FaceIter f = mesh.facesBegin(); f != mesh.facesEnd(); f++ )
   {
+    f->is_wc = true; // without this, everything will have default rendering
     f->wetness = (float)(random_uniform());
-    f->reflectance = Vector3D(0.6f, 0.1f, 0.1f);
+    f->reflectance = Vector3D(random_uniform(), random_uniform(), random_uniform());
     // do something interesting with v
   }
 }

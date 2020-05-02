@@ -19,6 +19,8 @@ Triangle::Triangle(const Mesh *mesh, size_t v1, size_t v2, size_t v3, WcInfo inf
 
   bsdf = mesh->get_bsdf();
   wc_refl = info.reflectance; // I'm copying... seems better as long as this doesn't get too big
+  is_wc = info.is_wc;
+  default_refl = bsdf->get_default_refl();
 }
 
 BBox Triangle::get_bbox() const { return bbox; }

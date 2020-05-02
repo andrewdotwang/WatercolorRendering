@@ -37,14 +37,17 @@ namespace CGL {
 	struct WcInfo {
 
 	  // Default constructor.
-	  WcInfo() : WcInfo(Vector3D(), Vector3D()) { }
+	  WcInfo() : WcInfo(Vector3D(), Vector3D(), false) { }
 
 	  WcInfo(Vector3D r, Vector3D t)
-	      : reflectance(r), transmittance(t) {}
+	      : reflectance(r), transmittance(t), is_wc(true) {}
+
+	  WcInfo(Vector3D r, Vector3D t, bool b)
+	      : reflectance(r), transmittance(t), is_wc(b) {}	      
 
 	  Vector3D reflectance;
 	  Vector3D transmittance;
-
+	  bool is_wc;
 	};
 
 }  // namespace CGL

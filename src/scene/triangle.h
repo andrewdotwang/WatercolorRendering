@@ -62,7 +62,13 @@ public:
    */
   BSDF* get_bsdf() const { return bsdf; }
 
-  Spectrum get_wc_refl() const { return wc_refl; }
+  Spectrum get_wc_refl() const { 
+    if (is_wc) {
+      return wc_refl; 
+    } else {
+      return default_refl;
+    }
+  }
 
   /**
    * Draw with OpenGL (for visualizer)
@@ -80,6 +86,9 @@ private:
   Vector3D n1, n2, n3;
 
   Spectrum wc_refl; // Might want to make this a property of each point and do barycentric?
+  Spectrum default_refl;
+
+  bool is_wc;
   
   BSDF* bsdf;
 

@@ -378,7 +378,7 @@ class Face : public HalfedgeElement {
    * initializes the face, possibly setting its boundary flag
    * (by default, a Face does not encode a boundary loop)
    */
-  Face(bool isBoundary = false) : _isBoundary(isBoundary) {}
+  Face(bool isBoundary = false) : _isBoundary(isBoundary), is_wc(false) {}
 
   /**
    * Returns a reference to some halfedge of this face
@@ -428,6 +428,8 @@ class Face : public HalfedgeElement {
 
   Vector3D reflectance;
   Vector3D transmittance;
+
+  bool is_wc;
 
   Matrix4x4 quadric;
 

@@ -137,6 +137,7 @@ void RaytracedRenderer::set_camera(Camera *camera) {
   }
 
   this->camera = camera;
+  wc->camera = camera;
 
   if (has_valid_configuration()) {
     state = READY;

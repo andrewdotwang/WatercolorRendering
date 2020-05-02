@@ -4,6 +4,7 @@
 #include "CGL/timer.h"
 
 #include "scene/bvh.h"
+#include "pathtracer/camera.h"
 #include "pathtracer/sampler.h"
 #include "pathtracer/intersection.h"
 
@@ -21,6 +22,8 @@ using CGL::SceneObjects::BVHAccel;
 
 #include <unordered_set>
 #include <queue>
+#include <random>
+#include <time.h>
 
 namespace CGL {
 
@@ -31,9 +34,13 @@ namespace CGL {
 
         void simulate(GLScene::SceneObject *elem);
 
+        Camera* camera;       ///< current camera
     private:
+    	bool can_see(FaceIter f);
+    	FaceIter get_random_face(HalfedgeMesh& mesh);
     	void simulate_mesh(GLScene::Mesh* elem);
     	std::vector<FaceIter> get_patch(HalfedgeMesh& mesh, int num_faces, bool visible);
+
     };
 
     // I think we actually only need reflectance for rendering, probably could

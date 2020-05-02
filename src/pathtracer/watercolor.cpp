@@ -22,9 +22,35 @@ WaterColor::~WaterColor() {
 // dispatches to the appropriate method for simulating watercolor dispersion
 // based on the type of GLScene::SceneObject
 void WaterColor::simulate(GLScene::SceneObject *elem) {
-	  if (dynamic_cast<GLScene::Mesh*>(elem)) { 
-      simulate_mesh((GLScene::Mesh*)elem);
-    }
+  if (dynamic_cast<GLScene::Mesh*>(elem)) { 
+    simulate_mesh((GLScene::Mesh*)elem);
+  }
+}
+
+bool WaterColor::can_see(FaceIter f) {
+  Ray r = camera->generate_ray(0.5, 0.5);
+  return dot(f->normal(), r.d) < -0.25;
+}
+
+/*
+Returns a "random" face from the given mesh.
+
+Note that our pRNG is comes from util/random_util.h
+it doesn't even let you seed... so you'll get the same faces every time.
+if you want more random results, write your own random_uniform function
+using rand() and srand(time(NULL)) from the <random> library.
+*/
+FaceIter WaterColor::get_random_face(HalfedgeMesh& mesh) {
+  FaceIter starter_f;
+  unsigned long start_ind;
+
+
+  start_ind = (unsigned long)(random_uniform() * mesh.nFaces());
+  starter_f = mesh.facesBegin();
+  for(int tmp = 0; tmp < start_ind; tmp++) {
+    starter_f++;
+  }
+  return starter_f;
 }
 
 /* a nice method used to get a patch of faces of a given size on the mesh. 
@@ -33,17 +59,20 @@ void WaterColor::simulate(GLScene::SceneObject *elem) {
 \param num_faces The number of faces that should be in the returned patch 
 \param visible if True, this indicates that the patch should be somewhere visible
                to the camera.
+\return a list of Faces of the mesh that ccorrespond to a circle around a random ccenter point.
 */
 std::vector<FaceIter> WaterColor::get_patch(HalfedgeMesh& mesh, int num_faces, bool visible) {
   std::unordered_set<Face*> all_seen;
 
   //start with random face
-  unsigned long start_ind = (unsigned long)(random_uniform() * mesh.nFaces());
-  FaceIter starter_f = mesh.facesBegin();
-  for(int tmp = 0; tmp < start_ind; tmp++) {
-    starter_f++;
+
+  FaceIter starter_f = get_random_face(mesh);
+
+  if (visible) {
+    while(!can_see(starter_f)) {
+      starter_f = get_random_face(mesh);
+    }
   }
-  //FaceIter starter_f = mesh.facesBegin() + ;
 
   all_seen.insert(elementAddress(starter_f));
   std::queue<FaceIter> proc_q;
@@ -100,14 +129,17 @@ void WaterColor::simulate_mesh(GLScene::Mesh* elem) {
   Vector3D transmittance;
   */
   //for( FaceIter f = mesh.facesBegin(); f != mesh.facesEnd(); f++ ) //iterate over all faces
-  for (FaceIter f: get_patch(mesh, 200, false))
-  {
-    f->is_wc = true; // tells the renderer to use this face's watercolor reflectance instead of the default
+  for (int patch = 0; patch<5; patch++) {
+    for (FaceIter f: get_patch(mesh, 200, true))
+    {
+      f->is_wc = true; // tells the renderer to use this face's watercolor reflectance instead of the default
 
-    // initialize simulation params (below are placeholders; remove oor modify however you want)
-    f->wetness = (float)(random_uniform());
-    f->reflectance = Vector3D(0.6f, 0.1f, 0.1f);
+      // initialize simulation params (below are placeholders; remove oor modify however you want)
+      //f->wetness = (float)(random_uniform());
+      f->reflectance = Vector3D(0.6f, 0.1f, 0.1f);
+    }
   }
+
 }
 
 } // namespace CGL

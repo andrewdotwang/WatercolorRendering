@@ -41,6 +41,10 @@ namespace CGL {
     	void simulate_mesh(GLScene::Mesh* elem);
     	std::vector<FaceIter> get_patch(HalfedgeMesh& mesh, int num_faces, bool visible);
 
+    	Vector3D face_centroid(FaceIter f);
+		Vector3D face_to_edge(Vector3D f_cent, HalfedgeIter h);
+    	float calc_angle(Vector3D f_cent, Vector3D n0, FaceIter f2, HalfedgeIter h);
+    	float face_height(FaceIter f);
     };
 
     // I think we actually only need reflectance for rendering, probably could

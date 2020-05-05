@@ -106,6 +106,62 @@ std::vector<FaceIter> WaterColor::get_patch(HalfedgeMesh& mesh, int num_faces, b
   return ret;
 }
 
+Vector3D WaterColor::face_centroid(FaceIter f) {
+  HalfedgeIter& h = f->halfedge();
+  Vector3D cent;
+  for (int i = 0; i < 3; i++) {
+    cent += h->vertex()->position;
+    h = h->next();
+  }
+  return cent / 3.;
+}
+
+Vector3D WaterColor::face_to_edge(Vector3D f_cent, HalfedgeIter h) {
+  Vector3D to_edge = h->vertex()->position - f_cent;
+  Vector3D edge_dir = (h->vertex()->position - h->twin()->vertex()->position).unit();
+  return to_edge - dot(to_edge, edge_dir) * edge_dir;
+}
+
+float WaterColor::calc_angle(Vector3D f_cent, Vector3D n0, FaceIter f2, HalfedgeIter h) {
+  
+  Vector3D n2 = f2->normal();
+
+  Vector3D x_axis = (face_to_edge(f_cent, h)).unit();
+  float n_dot = dot(n0, n2);
+  if (n_dot == 1.) {
+    return 0.;
+  }
+  //n_dot should never be -1; that would imply the triangles overlap, violating a mesh assumption
+  // all other n_dot will have some component in the "not n0 direction"
+  float n2_x = dot(n2, x_axis);
+  return atan2(n_dot, -n2_x);
+}
+
+/*
+returns a number in the range [0, 1] representing the height of a face.
+this is relatively computationally expensive, so if your simulation is slow
+you might want to cache the results either inside or outside this function
+(I'd recommend inside for a cleaner interface).
+
+We could also look into less expensive estimates for face height than 
+intersection angle, or even just faster ways to implement the above algorithms 
+(maybe adding const and & in a few places is best practice?)
+*/
+float WaterColor::face_height(FaceIter f) {
+  Vector3D f_cent = face_centroid(f);
+  Vector3D n0 = f->normal();
+
+  HalfedgeIter& h = f->halfedge();
+  float tot_height = 0;
+  for (int i = 0; i < 3; i++) {
+    FaceIter f2 = h->twin()->face();
+    tot_height += -1. * calc_angle(f_cent, n0, f2, h) / PI;
+    h = h->next();
+  }
+  return (tot_height + 3.)/6.;
+}
+
+
 // Simulates watercolor paint spreading over a mesh.
 // NOTE: we eventually will need to have a way of specifying how
 //       the brush-strokes are specified. For now we'll just initialize
@@ -135,6 +191,7 @@ void WaterColor::simulate_mesh(GLScene::Mesh* elem) {
       f->is_wc = true; // tells the renderer to use this face's watercolor reflectance instead of the default
 
       // initialize simulation params (below are placeholders; remove oor modify however you want)
+
       //f->wetness = (float)(random_uniform());
       f->reflectance = Vector3D(0.6f, 0.1f, 0.1f);
     }

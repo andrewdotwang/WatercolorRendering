@@ -186,14 +186,23 @@ void WaterColor::simulate_mesh(GLScene::Mesh* elem) {
   */
   //for( FaceIter f = mesh.facesBegin(); f != mesh.facesEnd(); f++ ) //iterate over all faces
   for (int patch = 0; patch<5; patch++) {
-    for (FaceIter f: get_patch(mesh, 200, true))
+    for (FaceIter f: get_patch(mesh, 400, true))
     {
       f->is_wc = true; // tells the renderer to use this face's watercolor reflectance instead of the default
 
       // initialize simulation params (below are placeholders; remove oor modify however you want)
 
       //f->wetness = (float)(random_uniform());
-      f->reflectance = Vector3D(0.6f, 0.1f, 0.1f);
+      float f_h = face_height(f);
+      if (f_h <0.2){
+        f->reflectance = Vector3D(0.6f, 0.1f, 0.1f);
+      } else if (f_h < 0.25) {
+        f->reflectance = Vector3D(0.1f, 0.6f, 0.1f);
+      } else {
+        f->reflectance = Vector3D(0.1f, 0.1f, 0.6f);
+      }
+      //f->reflectance = Vector3D(f_h,f_h,f_h);
+      //f->reflectance = Vector3D(0.6f, 0.1f, 0.1f);
     }
   }
 

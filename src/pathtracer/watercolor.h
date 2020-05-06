@@ -45,6 +45,11 @@ namespace CGL {
 		Vector3D face_to_edge(Vector3D f_cent, HalfedgeIter h);
     	float calc_angle(Vector3D f_cent, Vector3D n0, FaceIter f2, HalfedgeIter h);
     	float face_height(FaceIter f);
+      void move_water(std::vector<FaceIter> patch);
+      void update_velocities(std::vector<FaceIter> patch);
+      void flow_outward(std::vector<FaceIter> patch);
+      void move_pigment(std::vector<FaceIter> patch);
+      void transfer_pigment(std::vector<FaceIter> patch);
     };
 
     // I think we actually only need reflectance for rendering, probably could
@@ -58,7 +63,7 @@ namespace CGL {
 	      : reflectance(r), transmittance(t), is_wc(true) {}
 
 	  WcInfo(Vector3D r, Vector3D t, bool b)
-	      : reflectance(r), transmittance(t), is_wc(b) {}	      
+	      : reflectance(r), transmittance(t), is_wc(b) {}
 
 	  Vector3D reflectance;
 	  Vector3D transmittance;

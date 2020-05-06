@@ -420,10 +420,20 @@ class Face : public HalfedgeElement {
   Vector3D normal(void) const;
 
   float wetness;
-  Vector2D uv_flow;
+  Vector3D xyz_flow;
   float pressure;
+  float height;
+  Vector3D h_slopes;
+
+  float saturation;
+  float capacity;
+
 
   std::vector<float> pigments_g;
+  std::vector<float> pigments_g_new;
+  std::vector<float> density;
+  std::vector<float> staining_power;
+  std::vector<float> granulation;
   std::vector<float> pigments_d;
 
   Vector3D reflectance;
@@ -434,7 +444,7 @@ class Face : public HalfedgeElement {
   Matrix4x4 quadric;
 
 
-  
+
 
  protected:
   HalfedgeIter _halfedge;  ///< one of the halfedges of this face
@@ -516,7 +526,7 @@ class Vertex : public HalfedgeElement {
          Vector3D pk = h->next()->next()->vertex()->position;
          normal += cross( pj-pi, pk-pi );
          h = h->next()->twin();
-      } while( h != halfedge() );      
+      } while( h != halfedge() );
     } else {
       do {
          Vector3D pj = h->next()->vertex()->position;

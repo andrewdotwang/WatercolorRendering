@@ -426,6 +426,7 @@ class Face : public HalfedgeElement {
   Vector3D h_slopes;
 
   float saturation;
+  float saturation_new;
   float capacity;
 
 

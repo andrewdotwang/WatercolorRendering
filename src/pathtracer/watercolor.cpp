@@ -161,63 +161,92 @@ float WaterColor::face_height(FaceIter f) {
   return (tot_height + 3.)/6.;
 }
 
+// main function for moving water in the shallow water layer
 void WaterColor::move_water(std::vector<FaceIter> patch) {
-  return;
+  update_velocities(patch);
+  relax_divergence(patch);
+  flow_outward(patch);
 }
 
+// updating velocities, changing velocity in each direction by random factor scaled by height differential in that direction
 void WaterColor::update_velocities(std::vector<FaceIter> patch) {
   //trying random velocity updates
-  for (FaceIter f: patch) {
-    float x_rand_scale = abs(random_uniform());
-    float y_rand_scale = abs(random_uniform());
-    float z_rand_scale = abs(random_uniform());
+  int timesteps = 5; // need to set timesteps if not following code from paper
 
-    if (f->xyz_flow[0] > 0) {
-      f->xyz_flow[0] = max(0.0, f->xyz_flow[0] - x_rand_scale * f->h_slopes[0]);
-    } else if (f->xyz_flow[0] < 0) {
-      f->xyz_flow[0] = min(0.0, f->xyz_flow[0] + x_rand_scale * f->h_slopes[0]);
+  for (int t = 0; t < timesteps; t++) {
+
+    for (FaceIter f: patch) {
+      float x_rand_scale = abs(random_uniform());
+      float y_rand_scale = abs(random_uniform());
+      float z_rand_scale = abs(random_uniform());
+
+      if (f->xyz_flow[0] > 0) {
+        f->xyz_flow[0] = max(0.0, f->xyz_flow[0] - x_rand_scale * f->h_slopes[0]);
+      } else if (f->xyz_flow[0] < 0) {
+        f->xyz_flow[0] = min(0.0, f->xyz_flow[0] + x_rand_scale * f->h_slopes[0]);
+      }
+
+      if (f->xyz_flow[1] > 0) {
+        f->xyz_flow[1] = max(0.0, f->xyz_flow[1] - y_rand_scale * f->h_slopes[1]);
+      } else if (f->xyz_flow[0] < 0) {
+        f->xyz_flow[1] = min(0.0, f->xyz_flow[1] + y_rand_scale * f->h_slopes[1]);
+      }
+
+      if (f->xyz_flow[2] > 0) {
+        f->xyz_flow[2] = max(0.0, f->xyz_flow[2] - z_rand_scale * f->h_slopes[2]);
+      } else if (f->xyz_flow[0] < 0) {
+        f->xyz_flow[2] = min(0.0, f->xyz_flow[2] + z_rand_scale * f->h_slopes[2]);
+      }
+
     }
 
-    if (f->xyz_flow[1] > 0) {
-      f->xyz_flow[1] = max(0.0, f->xyz_flow[1] - y_rand_scale * f->h_slopes[1]);
-    } else if (f->xyz_flow[0] < 0) {
-      f->xyz_flow[1] = min(0.0, f->xyz_flow[1] + y_rand_scale * f->h_slopes[1]);
+    for (FaceIter f: patch) {
+      if (!f->is_wc) {
+        f->xyz_flow = Vector3D(0.0, 0.0, 0.0);
+      }
     }
-
-    if (f->xyz_flow[2] > 0) {
-      f->xyz_flow[2] = max(0.0, f->xyz_flow[2] - z_rand_scale * f->h_slopes[2]);
-    } else if (f->xyz_flow[0] < 0) {
-      f->xyz_flow[2] = min(0.0, f->xyz_flow[2] + z_rand_scale * f->h_slopes[2]);
-    }
-
   }
-
-  // int max_uv = 0;
-  // for (FaceIter f: newPatch) {
-  //   f->xyz_flow = f->xyz_flow - f->h_slope;
-    // max_uv = max(max_uv, ceil(max(f->xyz_flow[0],f->xyz_flow[1])));
-  // }
-  //
-  // for (int t = 0; t < 1; t += 1/max_uv) {
-  //   for (FaceIter f: newPatch) {
-  //   }
-  // }
-
 }
 
-void WaterColor::flow_outward(std::vector<FaceIter> patch) {
-  //makes edge darken
+//relaxing the divergence of the velocity field ???
+void WaterColor::relax_divergence(std::vector<FaceIter> patch) {
   return;
 }
 
+//edge darkening, paper applies a gausian blur on water mask (faces with is_wc)
+//can try another brute force way of only dealing with edge faces with is_wc
+void WaterColor::flow_outward(std::vector<FaceIter> patch) {
+  float remove_factor = 0.9; //tweak parameters??
+
+  for (FaceIter f: patch) {
+
+    HalfedgeIter& h = f->halfedge();
+    for (int i = 0; i < 3; i++) {
+      FaceIter f2 = h->twin()->face();
+
+      if (!f2->is_wc) {
+        f->pressure = f->pressure * remove_factor;
+        break;
+      }
+
+      h = h->next();
+    }
+  }
+}
+
+//distribution of pigments from cell (face) to neighbors according to the rate of fluid movement out of the cell
+//velocity in different directions result in different amounts of pigment movement => impacted by height differential
 void WaterColor::move_pigment(std::vector<FaceIter> patch) {
   // float max_xyz = 0;
   // for (FaceIter f: patch) {
   //   max_xyz = max(max_xyz, ceil(max(max(abs(f->xyz_flow[0]), abs(f->xyz_flow[1])), abs(f->xyz_flow[2]))));
   // }
+  int timesteps = 5; // need to set timesteps if not following code from paper
 
-  for (int t = 0; t < 5; t++) {
-
+  for (int t = 0; t < timesteps; t++) {
+    for (FaceIter f: patch) {
+      f->pigments_g_new = f->pigments_g;
+    }
     for (FaceIter f: patch) {
 
       std::vector<FaceIter> neighbors;
@@ -229,36 +258,75 @@ void WaterColor::move_pigment(std::vector<FaceIter> patch) {
       }
 
       for (int i = 0; i < f->pigments_g.size(); i++) {
-        neighbors[0]->pigments_g_new[i] = neighbors[0]->pigments_g_new[i] + max(0.0, f->xyz_flow[0] * f->pigments_g[i]);
-        neighbors[1]->pigments_g_new[i] = neighbors[1]->pigments_g_new[i] + max(0.0, f->xyz_flow[1] * f->pigments_g[i]);
-        neighbors[2]->pigments_g_new[i] = neighbors[2]->pigments_g_new[i] + max(0.0, f->xyz_flow[2] * f->pigments_g[i]);
+        neighbors[0]->pigments_g_new[i] += max(0.0, f->xyz_flow[0] * f->pigments_g[i]);
+        neighbors[1]->pigments_g_new[i] += max(0.0, f->xyz_flow[1] * f->pigments_g[i]);
+        neighbors[2]->pigments_g_new[i] += max(0.0, f->xyz_flow[2] * f->pigments_g[i]);
         f->pigments_g_new[i] = f->pigments_g_new[i] - max(0.0, f->xyz_flow[0] * f->pigments_g[i]) - max(0.0, f->xyz_flow[1] * f->pigments_g[i]) - max(0.0, f->xyz_flow[2] * f->pigments_g[i]);
       }
     }
+    for (FaceIter f: patch) {
+      f->pigments_g = f->pigments_g_new;
+    }
   }
 
 }
 
+//at each step of simulation, pigment is absorbed into the paper at certain rates, but also back into fluid at other rates
 void WaterColor::transfer_pigment(std::vector<FaceIter> patch) {
   for (FaceIter f: patch) {
-    for (int i = 0; i < f->pigments_g.size(); i++) {
-      float delta_down = f->pigments_g[i] * (1.0 - f->height * f->granulation[i]) * f->density[i];
-      float delta_up = f->pigments_d[i] * (1.0 + (f->height - 1.0) * f->granulation[i]) * f->density[i] / f->staining_power[i];
-      if (f->pigments_d[i] + delta_down > 1) {
-        delta_down = max(0.0, 1.0 - f->pigments_d[i]);
+    if (f->is_wc) {
+      for (int i = 0; i < f->pigments_g.size(); i++) {
+        float delta_down = f->pigments_g[i] * (1.0 - f->height * f->granulation[i]) * f->density[i];
+        float delta_up = f->pigments_d[i] * (1.0 + (f->height - 1.0) * f->granulation[i]) * f->density[i] / f->staining_power[i];
+        if (f->pigments_d[i] + delta_down > 1) {
+          delta_down = max(0.0, 1.0 - f->pigments_d[i]);
+        }
+        if (f->pigments_g[i] + delta_up > 1) {
+          delta_up = max(0.0, 1.0 - f->pigments_g[i]);
+        }
+        f->pigments_d[i] += delta_down - delta_up;
+        f->pigments_g[i] += delta_up - delta_down;
       }
-      if (f->pigments_g[i] + delta_up > 1) {
-        delta_up = max(0.0, 1.0 - f->pigments_g[i]);
-      }
-      f->pigments_d[i] += delta_down - delta_up;
-      f->pigments_g[i] += delta_up - delta_down;
     }
   }
 }
 
-// void WaterColor::simulateCapillaryFlow(std::vector<FaceIter> patch) {
-//
-// }
+//simulates how paper absorbs water and increases the water color area
+void WaterColor::simulateCapillaryFlow(std::vector<FaceIter> patch) {
+  float absorbtion_rate = 1.0; //tweak this parameter?
+  float threshold = 0.5; //tweak this parameter?
+  float min_saturation_diffuse_neighbors = 1.0; //tweak this parameter?
+  float min_saturation_no_diffuse = 1.0; //tweak this parameter?
+
+  for (FaceIter f: patch) {
+    if (f->is_wc) {
+      f->saturation += max(float(0.0), min(absorbtion_rate, f->capacity - f->saturation));
+    }
+    f->saturation_new = f->saturation;
+  }
+
+  for (FaceIter f: patch) {
+    HalfedgeIter& h = f->halfedge();
+    for (int i = 0; i < 3; i++) {
+      FaceIter f2 = h->twin()->face();
+
+      if (f->saturation > min_saturation_diffuse_neighbors && f->saturation > f2->saturation && f2->saturation > min_saturation_no_diffuse) {
+        float delta_s = max(0.0, min(f->saturation - f2->saturation, f2->capacity - f2->saturation)/4.0);
+        f->saturation_new -= delta_s;
+        f2->saturation_new += delta_s;
+      }
+
+      h = h->next();
+    }
+  }
+
+  for (FaceIter f: patch) {
+    f->saturation = f->saturation_new;
+    if (f->saturation > threshold) {
+      f->is_wc = true;
+    }
+  }
+}
 
 
 // Simulates watercolor paint spreading over a mesh.
@@ -284,8 +352,15 @@ void WaterColor::simulate_mesh(GLScene::Mesh* elem) {
   Vector3D transmittance;
   */
   //for( FaceIter f = mesh.facesBegin(); f != mesh.facesEnd(); f++ ) //iterate over all faces
+
+  std::vector<std::vector<FaceIter>> patches;
+
   for (int patch = 0; patch<5; patch++) {
+
     std::vector<FaceIter> newPatch = get_patch(mesh, 400, true);
+    patches.push_back(newPatch);
+
+    //need to instantiate properties of each face "cell" for simulation
     for (FaceIter f: newPatch) {
       f->is_wc = true; // tells the renderer to use this face's watercolor reflectance instead of the default
 
@@ -294,8 +369,25 @@ void WaterColor::simulate_mesh(GLScene::Mesh* elem) {
       //f->wetness = (float)(random_uniform());
       float f_h = face_height(f);
       f->height = f_h;
-      f->xyz_flow = Vector3D(0.0, 0.0, 0.0);
 
+      //placeholder values, need to set default values
+      f->xyz_flow = Vector3D(0.0, 0.0, 0.0); //need to set initial xyz_flow velocities to actually run update_velocities()?
+      f->pressure = 1.0;
+
+      f->saturation = 1.0;
+      f->saturation_new = 1.0;
+      f->capacity = 1.0; //per paper, shoud be  c = h * (c_max - c_min) + c_min
+
+      //all faces should have the same k pigments, varrying in property values
+      //using placeholders, need to modify, can follow values in paper in figure 5
+      f->pigments_g = {1.0, 2.0, 3.0, 4.0};
+      f->pigments_g_new = {1.0, 2.0, 3.0, 4.0};
+      f->density = {1.0, 2.0, 3.0, 4.0};
+      f->staining_power = {1.0, 2.0, 3.0, 4.0};
+      f->granulation = {1.0, 2.0, 3.0, 4.0};
+      f->pigments_d = {1.0, 2.0, 3.0, 4.0};
+
+      //example render of heightmap
       if (f_h <0.2){
         f->reflectance = Vector3D(0.6f, 0.1f, 0.1f);
       } else if (f_h < 0.25) {
@@ -303,10 +395,9 @@ void WaterColor::simulate_mesh(GLScene::Mesh* elem) {
       } else {
         f->reflectance = Vector3D(0.1f, 0.1f, 0.6f);
       }
-      //f->reflectance = Vector3D(f_h,f_h,f_h);
-      //f->reflectance = Vector3D(0.6f, 0.1f, 0.1f);
     }
 
+    //need to get a gradient of height differences for each direction, 3 in total
     for (FaceIter f: newPatch) {
       HalfedgeIter& h = f->halfedge();
       for (int i = 0; i < 3; i++) {
@@ -322,6 +413,14 @@ void WaterColor::simulate_mesh(GLScene::Mesh* elem) {
   // run water simulation on each patch
   // end result will result in each face having multiple properties of pigments
   // find a way to set reflectance and transmittance values of the face to show true water color pigments
+  for (std::vector<FaceIter> patch : patches) {
+    move_water(patch);
+    move_pigment(patch);
+    transfer_pigment(patch);
+    simulateCapillaryFlow(patch);
+  }
+
+
 }
 
 } // namespace CGL

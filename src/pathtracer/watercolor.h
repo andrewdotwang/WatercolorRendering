@@ -47,9 +47,11 @@ namespace CGL {
     	float face_height(FaceIter f);
       void move_water(std::vector<FaceIter> patch);
       void update_velocities(std::vector<FaceIter> patch);
+      void relax_divergence(std::vector<FaceIter> patch);
       void flow_outward(std::vector<FaceIter> patch);
       void move_pigment(std::vector<FaceIter> patch);
       void transfer_pigment(std::vector<FaceIter> patch);
+      void simulateCapillaryFlow(std::vector<FaceIter> patch);
     };
 
     // I think we actually only need reflectance for rendering, probably could

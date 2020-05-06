@@ -386,15 +386,6 @@ void WaterColor::simulate_mesh(GLScene::Mesh* elem) {
       f->staining_power = {1.0, 2.0, 3.0, 4.0};
       f->granulation = {1.0, 2.0, 3.0, 4.0};
       f->pigments_d = {1.0, 2.0, 3.0, 4.0};
-
-      //example render of heightmap
-      if (f_h <0.2){
-        f->reflectance = Vector3D(0.6f, 0.1f, 0.1f);
-      } else if (f_h < 0.25) {
-        f->reflectance = Vector3D(0.1f, 0.6f, 0.1f);
-      } else {
-        f->reflectance = Vector3D(0.1f, 0.1f, 0.6f);
-      }
     }
 
     //need to get a gradient of height differences for each direction, 3 in total
@@ -418,6 +409,19 @@ void WaterColor::simulate_mesh(GLScene::Mesh* elem) {
     move_pigment(patch);
     transfer_pigment(patch);
     simulateCapillaryFlow(patch);
+  }
+  for (std::vector<FaceIter> patch : patches) {
+    for(FaceIter f : patch) {
+      //example render of heightmap
+      if (f->height <0.2){
+        f->reflectance = Vector3D(0.6f, 0.1f, 0.1f);
+      } else if (f->height < 0.25) {
+        f->reflectance = Vector3D(0.1f, 0.6f, 0.1f);
+      } else {
+        f->reflectance = Vector3D(0.1f, 0.1f, 0.6f);
+      }
+
+    }
   }
 
 

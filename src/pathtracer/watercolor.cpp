@@ -261,15 +261,15 @@ void WaterColor::move_pigment(std::vector<FaceIter> patch) {
       for (int i = 0; i < f->pigments_g.size(); i++) {
         float change = 0.0;
         if (neighbors[0]->is_wc) {
-          neighbors[0]->pigments_g_new[i] += max(0.0, 2.0 * f->xyz_flow[0] * f->pigments_g[i]);
+          neighbors[0]->pigments_g_new[i] += max(0.0, 1.5 * f->xyz_flow[0] * f->pigments_g[i]);
           change += max(0.0, f->xyz_flow[0] * f->pigments_g[i]);
         }
         if (neighbors[1]->is_wc) {
-          neighbors[1]->pigments_g_new[i] += max(0.0, 2.0 * f->xyz_flow[1] * f->pigments_g[i]);
+          neighbors[1]->pigments_g_new[i] += max(0.0, 1.5 * f->xyz_flow[1] * f->pigments_g[i]);
           change += max(0.0, f->xyz_flow[1] * f->pigments_g[i]);
         }
         if (neighbors[2]->is_wc) {
-          neighbors[2]->pigments_g_new[i] += max(0.0, 2.0 * f->xyz_flow[2] * f->pigments_g[i]);
+          neighbors[2]->pigments_g_new[i] += max(0.0, 1.5 * f->xyz_flow[2] * f->pigments_g[i]);
           change += max(0.0, f->xyz_flow[2] * f->pigments_g[i]);
         }
         f->pigments_g_new[i] -= change;
@@ -358,7 +358,7 @@ void WaterColor::simulate_mesh(GLScene::Mesh* elem) {
 
   for (int patch = 0; patch<5; patch++) {
 
-    std::vector<FaceIter> newPatch = get_patch(mesh, 800, true);
+    std::vector<FaceIter> newPatch = get_patch(mesh, 1500, true);
     patches.push_back(newPatch);
 
     //need to instantiate properties of each face "cell" for simulation
@@ -465,7 +465,7 @@ void WaterColor::simulate_mesh(GLScene::Mesh* elem) {
         if (pigment_d_sum == 0) {
           factors.push_back(0.0);
         } else {
-          factors.push_back(0.1/(f->pigments_g[i] + f->pigments_d[i]));
+          factors.push_back((f->pigments_g[i]+f->pigments_d[i])/1.2);
           // std::cout << (f->pigments_g[i] + f->pigments_d[i])/pigment_d_sum << endl;
         }
       }
@@ -474,8 +474,11 @@ void WaterColor::simulate_mesh(GLScene::Mesh* elem) {
       Vector3D custom_g = Vector3D(87.0/255.0, 162.0/255.0,  75.0/255.0);
       Vector3D custom_b = Vector3D(64.0/255.0, 125.0/255.0,  237.0/255.0);
       std::cout << factors[0] << "\t" << factors[1] << "\t" << factors[2] << endl;
+      // std::cout << factors[0] + factors[1] + factors[2] << endl;
       f->reflectance = factors[0] * custom_r + factors[1] * custom_g + factors[2] * custom_b;
+      // f->transmittance = factors[0] * custom_r + factors[1] * custom_g + factors[2] * custom_b;
       // f->reflectance = (1.0/2.1) * custom_r + (0.1/2.1) * custom_g + (1.0/2.1) * custom_b;
+      // f->reflectance = Vector3D(factors[0],factors[1],factors[2]);
     }
     // Vector3D red = Vector3D(0.77,  0.015,  0.018);
     // Vector3D green = Vector3D(0.01,  0.012,  0.003);

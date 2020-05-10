@@ -19,6 +19,48 @@ WaterColor::~WaterColor() {
   //delete stuff if necessary
 }
 
+StatsBuilder::StatsBuilder() {
+  sum = 0; 
+}
+
+void StatsBuilder::add(float n) {
+  nums.push_back(n);
+  sum += n;
+}
+
+Stats StatsBuilder::calc_stats() {
+  int n = nums.size();
+  if (n == 0) {
+    return Stats();
+  }
+  float mean = sum / (float(n));
+  float sum_sq_diff = 0.;
+  float min = nums[0];
+  float max = nums[0];
+  for (float f: nums) {
+    sum_sq_diff += (f - mean) * (f - mean);
+    if (f < min) {
+      min = f;
+    }
+    if (f > max) {
+      max = f;
+    }
+  }
+  float std = sqrt(sum_sq_diff/ float(n));
+
+  return Stats(mean, std, min, max, n);
+}
+
+void StatsBuilder::clear() {
+  sum = 0.;
+  nums.clear();
+}
+
+void StatsBuilder::print_stats() {
+  Stats s = calc_stats();
+  cout << "mean: " << s.mean << " std: " << s.std << " min: " << s.min << " max: " << s.max << " n: " << s.num_vals << endl;
+}
+
 // dispatches to the appropriate method for simulating watercolor dispersion
 // based on the type of GLScene::SceneObject
 void WaterColor::simulate(GLScene::SceneObject *elem) {
@@ -356,11 +398,13 @@ void WaterColor::simulate_mesh(GLScene::Mesh* elem) {
 
   std::vector<std::vector<FaceIter>> patches;
 
+  StatsBuilder sb;
   for (int patch = 0; patch<5; patch++) {
 
     std::vector<FaceIter> newPatch = get_patch(mesh, 1500, true);
     patches.push_back(newPatch);
 
+    
     //need to instantiate properties of each face "cell" for simulation
     for (FaceIter f: newPatch) {
       f->is_wc = true; // tells the renderer to use this face's watercolor reflectance instead of the default
@@ -370,6 +414,7 @@ void WaterColor::simulate_mesh(GLScene::Mesh* elem) {
       //f->wetness = (float)(random_uniform());
       float f_h = face_height(f);
       f->height = f_h;
+      sb.add(f_h);
 
       //placeholder values, need to set default values
       f->xyz_flow = Vector3D(0.0, 0.0, 0.0); //need to set initial xyz_flow velocities to actually run update_velocities()?
@@ -388,6 +433,8 @@ void WaterColor::simulate_mesh(GLScene::Mesh* elem) {
       f->granulation = {0.63, 0.41, 0.31};
       f->pigments_d = {0.0, 0.0, 0.0};
     }
+    sb.print_stats();
+    sb.clear();
 
     //need to get a gradient of height differences for each direction, 3 in total
     for (FaceIter f: newPatch) {
@@ -473,7 +520,7 @@ void WaterColor::simulate_mesh(GLScene::Mesh* elem) {
       Vector3D custom_r = Vector3D(207.0/255.0, 82.0/255.0,  75.0/255.0);
       Vector3D custom_g = Vector3D(87.0/255.0, 162.0/255.0,  75.0/255.0);
       Vector3D custom_b = Vector3D(64.0/255.0, 125.0/255.0,  237.0/255.0);
-      std::cout << factors[0] << "\t" << factors[1] << "\t" << factors[2] << endl;
+      //std::cout << factors[0] << "\t" << factors[1] << "\t" << factors[2] << endl;
       // std::cout << factors[0] + factors[1] + factors[2] << endl;
       f->reflectance = factors[0] * custom_r + factors[1] * custom_g + factors[2] * custom_b;
       // f->transmittance = factors[0] * custom_r + factors[1] * custom_g + factors[2] * custom_b;

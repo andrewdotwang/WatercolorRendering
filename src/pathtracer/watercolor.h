@@ -52,6 +52,8 @@ namespace CGL {
       void move_pigment(std::vector<FaceIter> patch);
       void transfer_pigment(std::vector<FaceIter> patch);
       void simulateCapillaryFlow(std::vector<FaceIter> patch);
+
+      
     };
 
     // I think we actually only need reflectance for rendering, probably could
@@ -71,6 +73,35 @@ namespace CGL {
 	  Vector3D transmittance;
 	  bool is_wc;
 	};
+
+	struct Stats {
+
+		Stats() : Stats(0., 0., 0., 0., 0) { }
+
+		Stats(float me, float st, float mi, float ma, int nv)
+		      : mean(me), std(st), min(mi), max(ma), num_vals(nv) {}
+
+		float mean;
+		float std;
+		float min;
+		float max;
+		float num_vals;
+	};
+
+	class StatsBuilder {
+		public:
+	        StatsBuilder();
+
+	        void add(float n);
+	        Stats calc_stats();
+	        void print_stats();
+	        void clear();
+	    private:
+	    	std::vector<float> nums;
+	    	float sum;
+	};
+
+
 
 }  // namespace CGL
 

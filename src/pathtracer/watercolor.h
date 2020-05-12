@@ -53,7 +53,14 @@ namespace CGL {
       void transfer_pigment(std::vector<FaceIter> patch);
       void simulateCapillaryFlow(std::vector<FaceIter> patch);
 
+	  void get_timescale(std::vector<FaceIter>& patch, float* timesteps, float* dt);
+	  void calc_vel_coords(float* x_coord, float* y_coord, Vector3D& x_axis, Vector3D& y_axis, HalfedgeIter& h);
+	  float scalar_proj(Vector3D& v, Vector3D& axis);
+	  Vector3D proj(Vector3D& v, Vector3D& axis);
+
       
+      float mu = 0.1;
+      float kappa = 0.01;
     };
 
     // I think we actually only need reflectance for rendering, probably could

@@ -210,45 +210,178 @@ void WaterColor::move_water(std::vector<FaceIter> patch) {
   // flow_outward(patch);
 }
 
+void WaterColor::get_timescale(std::vector<FaceIter>& patch, float* timesteps, float* dt) {
+  StatsBuilder sb;
+  sb.clear();
+  for (FaceIter f: patch) {
+    HalfedgeIter& h = f->halfedge();
+    for (int i = 0; i < 3; i++) {
+      sb.add(h->wc_mag);
+    }
+  }
+  Stats s = sb.calc_stats();
+  *timesteps = s.max > -s.min ? s.max : -s.min;
+  if (*timesteps < 1.) {
+    *timesteps = 1.;
+  }
+  *dt = 1.0/ *timesteps;
+  if (*timesteps > 1000) {
+    *timesteps = 1000.;
+  }
+}
+
 // updating velocities, changing velocity in each direction by random factor scaled by height differential in that direction
 void WaterColor::update_velocities(std::vector<FaceIter> patch) {
-  //trying random velocity updates
-  int timesteps = 1; // need to set timesteps if not following code from paper
 
-  for (int t = 0; t < timesteps; t++) {
 
-    for (FaceIter f: patch) {
-      float x_rand_scale = abs(random_uniform());
-      float y_rand_scale = abs(random_uniform());
-      float z_rand_scale = abs(random_uniform());
-
-      if (f->xyz_flow[0] > 0) {
-        f->xyz_flow[0] = max(0.0, f->xyz_flow[0] - x_rand_scale * f->h_slopes[0]);
-      } else if (f->xyz_flow[0] < 0) {
-        f->xyz_flow[0] = min(0.0, f->xyz_flow[0] - x_rand_scale * f->h_slopes[0]);
-      }
-
-      if (f->xyz_flow[1] > 0) {
-        f->xyz_flow[1] = max(0.0, f->xyz_flow[1] - y_rand_scale * f->h_slopes[1]);
-      } else if (f->xyz_flow[0] < 0) {
-        f->xyz_flow[1] = min(0.0, f->xyz_flow[1] - y_rand_scale * f->h_slopes[1]);
-      }
-
-      if (f->xyz_flow[2] > 0) {
-        f->xyz_flow[2] = max(0.0, f->xyz_flow[2] - z_rand_scale * f->h_slopes[2]);
-      } else if (f->xyz_flow[0] < 0) {
-        f->xyz_flow[2] = min(0.0, f->xyz_flow[2] - z_rand_scale * f->h_slopes[2]);
-      }
-
+  for (FaceIter f: patch) {
+    HalfedgeIter& h = f->halfedge();
+    for (int i = 0; i < 3; i++) {
+      h->wc_mag = max(0.0f, (float)(h->wc_mag + f->h_slopes[i]));
     }
+  }
+  // u,v = u,v - grad(h)
+  float timesteps, dt;
+  get_timescale(patch, &timesteps, &dt);
 
+  //cout << "timesteps " << timesteps << endl;
+  //StatsBuilder sb;
+  //sb.clear();
+
+  for (int t = 0; t < int(timesteps); t++) {
+    for (FaceIter f: patch) {
+
+      // we look at each (half-)edge of each triangle. 
+      // in general terms, "h" is f->halfedge(); the current half edge getting velocity updated
+      //                   "u" is the velocity across the boundary
+
+      // the visualization for "upper", "lower", "leftmost", and "rightmost" is as follows:
+      //                    /||\                                                          |
+      //        upper left / || \ upper right
+      //                  / h||  \                                                        |
+      //                  \  ||  /
+      //        lower left \ || / lower right
+      //                    \||/
+
+      //                   "v" is the velocity perpendicular to the boundary (i.e. in the direction of h)
+      // in terms of mapping a halfedge mesh onto a grid,
+      // we use the following defns:
+
+      // [ u_{i + .5, j} == h->wc_mag ] i.e. the velocity across the half edge we will modify
+      // [ u_{i, j}      == avg_of(f->all_h->wc_mag) proj onto f_to_h] i.e. find the component of the average
+      //                                                               exit velocity in the direction of exit from h
+      // [ u_{i+1, j}    == avg_of(f->h->twin->all_h->wc_mag) proj onto f_to_h] i.e. find the component of the 
+      //                                                                        average exit velocity of the twin 
+      //                                                                        face in the direction of exit from h's twin
+      // [ u_{i+1.5, j}  == avg of "rightmost" twin halfedge vals proj onto f_to_h]
+      // [ u_{i-.5, j}   == avg of "leftmost" halfedge vals proj onto f_to_h]
+
+      // [ u_{i+.5,j-x} == avg of "lower" halfedge vels proj onto f_to_h]
+      // [ v_{i+.5,j-x} == avg of "lower" halfedge vels proj onto h]
+      // [ u_{i+.5,j+x} == avg of "upper" halfedge vels proj onto f_to_h]
+      // [ v_{i+.5,j+x} == avg of "upper" halfedge vels proj onto h]
+      //  in the above, x can be either .5 or 1
+
+
+
+      HalfedgeIter& h = f->halfedge();
+      float u_ij, u_ip1j, u_ip5jp5, u_ip5jm5, v_ip5jm5, v_ip5jp5, u_ip15j, u_im5j, u_ip5j;
+      float up_l_x, lo_l_x, up_r_x, lo_r_x, up_l_y, lo_l_y, up_r_y, lo_r_y;
+      float A, B;
+      Vector3D f_cent = face_centroid(f);
+      float tot_flow = 0.;
+      for (int edge = 0; edge < 3; edge++) {
+        if (h->isBoundary()) {
+          continue;
+        }
+
+        Vector3D x_axis = face_to_edge(f_cent, h);
+        Vector3D y_axis = h->next()->vertex()->position - h->vertex()->position;
+
+        HalfedgeIter& ul = h->next();
+        calc_vel_coords(&up_l_x, &up_l_y, x_axis, y_axis, ul);
+
+        HalfedgeIter ll = ul->next();
+        calc_vel_coords(&lo_l_x, &lo_l_y, x_axis, y_axis, ll);
+
+        HalfedgeIter& t = h->twin();
+        HalfedgeIter& lr = t->next();
+        calc_vel_coords(&lo_r_x, &lo_r_y, x_axis, y_axis, lr);
+
+        HalfedgeIter& ur = lr->next();
+        calc_vel_coords(&up_r_x, &up_r_y, x_axis, y_axis, ur);
+
+        u_ij = (up_l_x + lo_l_x + h->wc_mag)/3.;
+        u_ip5j = h->wc_mag;
+        u_ip1j = (up_r_x + lo_r_x - t->wc_mag)/3.; // subtract wc_mag bc it is in the opposite direction
+
+        u_ip5jp5 = (up_l_x + up_r_x)/2.;
+        u_ip5jm5 = (lo_l_x + lo_r_x)/2.;
+        v_ip5jp5 = (up_l_y + up_r_y)/2.;
+        v_ip5jm5 = (lo_l_y + lo_r_y)/2.;
+
+        u_ip15j = (up_r_x + lo_r_x)/2.;
+        u_im5j  = (up_l_x + lo_l_x)/2.;
+
+        A = u_ij * u_ij - (u_ip1j * u_ip1j) + (u_ip5jm5 * v_ip5jm5) - (u_ip5jp5 * v_ip5jp5);
+        B = u_ip15j + u_im5j + u_ip5jp5 + u_ip5jm5 - (4. * u_ip5j);
+
+        FaceIter f2 = h->twin()->face();
+
+        h->wc_mag = max(0.0001f, (float)(u_ip5j + dt * (A - (mu * B) + f->pressure - f2->pressure - kappa * u_ip5j)));
+        //NOTE: might be better to store updates in a "new" variable then apply them all when done. but eh wtvr.
+        tot_flow += h->wc_mag;
+
+        h = h->next();
+      }
+
+      if (tot_flow > 1.) {
+        h = f->halfedge();
+        for (int edge = 0; edge < 3; edge ++) {
+          h->wc_mag = max(0.0001f, (float)(h->wc_mag / tot_flow) - 0.001f); // we want positive numbers that add up to a little less than 1
+          //sb.add(h->wc_mag);
+          h = h->next();
+        }
+      }
+    }
+  }
+  //sb.print_stats();
+}
+
+
+void WaterColor::calc_vel_coords(float* x_coord, float* y_coord, Vector3D& x_axis, Vector3D& y_axis, HalfedgeIter& h) {
+  Vector3D vel = h->wc_mag * h->wc_dir;
+  *x_coord = scalar_proj(vel, x_axis);
+  *y_coord = scalar_proj(vel, y_axis);
+}
+
+float WaterColor::scalar_proj(Vector3D& v, Vector3D& axis) {
+  return dot(v, axis) /dot(axis, axis);
+}
+
+Vector3D WaterColor::proj(Vector3D& v, Vector3D& axis) {
+  return scalar_proj(v, axis) * axis;
+}
+//code from previous implementation
+
+      /*
+      for (int dir = 0; dir < 3; dir++) {
+        if (f->xyz_flow[dir] > 0) {
+          f->xyz_flow[dir] = max(0.0, f->xyz_flow[dir] - rands[dir] * f->h_slopes[dir]);
+        } else {
+          f->xyz_flow[dir] = min(0.0, f->xyz_flow[dir] - rands[dir] * f->h_slopes[dir]);
+        }
+      }
+      */
+
+    /*
+    //this should never do anything, since all faces in the patch get watercolored
     for (FaceIter f: patch) {
       if (!f->is_wc) {
         f->xyz_flow = Vector3D(0.0, 0.0, 0.0);
       }
     }
-  }
-}
+    */
 
 //relaxing the divergence of the velocity field ???
 void WaterColor::relax_divergence(std::vector<FaceIter> patch) {
@@ -284,12 +417,20 @@ void WaterColor::move_pigment(std::vector<FaceIter> patch) {
   //   max_xyz = max(max_xyz, ceil(max(max(abs(f->xyz_flow[0]), abs(f->xyz_flow[1])), abs(f->xyz_flow[2]))));
   // }
 
-  int timesteps = 10; // need to set timesteps if not following code from paper
+  float ts, dt;
+  get_timescale(patch, &ts, &dt);
+  int timesteps = int(ts);
+
+  cout << "timesteps " << timesteps << endl;
+
+  StatsBuilder sb;
+  sb.clear();
+
+  for (FaceIter f: patch) {
+    f->pigments_g_new = f->pigments_g;
+  }
 
   for (int t = 0; t < timesteps; t++) {
-    for (FaceIter f: patch) {
-      f->pigments_g_new = f->pigments_g;
-    }
     for (FaceIter f: patch) {
 
       std::vector<FaceIter> neighbors;
@@ -302,25 +443,29 @@ void WaterColor::move_pigment(std::vector<FaceIter> patch) {
 
       for (int i = 0; i < f->pigments_g.size(); i++) {
         float change = 0.0;
-        if (neighbors[0]->is_wc) {
-          neighbors[0]->pigments_g_new[i] += max(0.0, 1.5 * f->xyz_flow[0] * f->pigments_g[i]);
-          change += max(0.0, f->xyz_flow[0] * f->pigments_g[i]);
+        float tmp;
+        HalfedgeIter& h = f->halfedge();
+        for (int dir = 0; dir < 3; dir++) {
+          if (neighbors[dir]->is_wc) {
+            //sb.add(f->pigments_g[i]);
+            sb.add(h->wc_mag);
+            tmp = max(0.0f, h->wc_mag * f->pigments_g[i]);
+            //sb.add(tmp);
+            neighbors[dir]->pigments_g_new[i] += tmp;
+            change += tmp;
+          }
+          h = h->next();
         }
-        if (neighbors[1]->is_wc) {
-          neighbors[1]->pigments_g_new[i] += max(0.0, 1.5 * f->xyz_flow[1] * f->pigments_g[i]);
-          change += max(0.0, f->xyz_flow[1] * f->pigments_g[i]);
-        }
-        if (neighbors[2]->is_wc) {
-          neighbors[2]->pigments_g_new[i] += max(0.0, 1.5 * f->xyz_flow[2] * f->pigments_g[i]);
-          change += max(0.0, f->xyz_flow[2] * f->pigments_g[i]);
-        }
+        
         f->pigments_g_new[i] -= change;
+        //sb.add(f->pigments_g_new[i]);
       }
     }
     for (FaceIter f: patch) {
       f->pigments_g = f->pigments_g_new;
     }
   }
+  sb.print_stats();
 
 }
 
@@ -399,9 +544,10 @@ void WaterColor::simulate_mesh(GLScene::Mesh* elem) {
   std::vector<std::vector<FaceIter>> patches;
 
   StatsBuilder sb;
+  Vector3D f_cent;
   for (int patch = 0; patch<5; patch++) {
 
-    std::vector<FaceIter> newPatch = get_patch(mesh, 1500, true);
+    std::vector<FaceIter> newPatch = get_patch(mesh, 200, true);
     patches.push_back(newPatch);
 
     
@@ -432,24 +578,47 @@ void WaterColor::simulate_mesh(GLScene::Mesh* elem) {
       f->staining_power = {1.0, 1.0, 1.0};
       f->granulation = {0.63, 0.41, 0.31};
       f->pigments_d = {0.0, 0.0, 0.0};
+
+      HalfedgeIter& h = f->halfedge();
+      f_cent = face_centroid(f);
+      for (int i = 0; i < 3; i++) {
+        h->wc_dir = (face_to_edge(f_cent, h)).unit();
+        h->wc_mag = 0.;
+  
+        h = h->next();
+      }
+
     }
-    sb.print_stats();
+
+    Stats s = sb.calc_stats();
+    sb.clear();
+    //scale to (0, 1)
+    for (FaceIter f: newPatch) {
+      f->height = (f->height - s.min)/(s.max - s.min);
+      //sb.add(f->height);
+    }
+
+    //sb.print_stats();
     sb.clear();
 
     //need to get a gradient of height differences for each direction, 3 in total
     for (FaceIter f: newPatch) {
+      //f_cent = face_centroid(f);
+      //Vector3D f_cent2;
       HalfedgeIter& h = f->halfedge();
       for (int i = 0; i < 3; i++) {
         FaceIter f2 = h->twin()->face();
+
         if (f2->is_wc) {
-          f->h_slopes[i] = f->height - f2->height;
+          //f_cent2 = face_centroid(f2);
+          f->h_slopes[i] = (f->height - f2->height); // / (norm(f1 - f2));
         } else {
           f->h_slopes[i] = 0.0;
         }
         h = h->next();
       }
 
-      f->xyz_flow = f->h_slopes;
+      //f->xyz_flow = f->h_slopes;
     }
 
   }
@@ -488,6 +657,10 @@ void WaterColor::simulate_mesh(GLScene::Mesh* elem) {
       // }
     }
   }
+  StatsBuilder sb_rgb[3];
+  for (int i = 0; i < 3; i++) {
+    sb_rgb[i] = StatsBuilder();
+  }
   for (std::vector<FaceIter> patch : patches) {
     // for(FaceIter f : patch) {
     //   //example render of heightmap
@@ -501,7 +674,10 @@ void WaterColor::simulate_mesh(GLScene::Mesh* elem) {
     // }
 
 
-
+    for (int i = 0; i < 3; i++) {
+      sb_rgb[i].clear();
+    }
+    
     for(FaceIter f : patch) {
       float pigment_d_sum = 0.0;
       std::vector<float> factors;
@@ -513,6 +689,14 @@ void WaterColor::simulate_mesh(GLScene::Mesh* elem) {
           factors.push_back(0.0);
         } else {
           factors.push_back((f->pigments_g[i]+f->pigments_d[i])/1.2);
+          /*
+          if (f->pigments_d[i] < -100) {
+            cout << "p_d" << i << " " << f->pigments_d[i] <<endl;
+          }
+          if (f->pigments_g[i] < -100) {
+            cout << "p_g" << i << " " << f->pigments_g[i] <<endl;
+          }
+          */
           // std::cout << (f->pigments_g[i] + f->pigments_d[i])/pigment_d_sum << endl;
         }
       }
@@ -522,11 +706,39 @@ void WaterColor::simulate_mesh(GLScene::Mesh* elem) {
       Vector3D custom_b = Vector3D(64.0/255.0, 125.0/255.0,  237.0/255.0);
       //std::cout << factors[0] << "\t" << factors[1] << "\t" << factors[2] << endl;
       // std::cout << factors[0] + factors[1] + factors[2] << endl;
+
+      //TODO: implement reflectance/transmittance layering
+      // TODO: data structure to allow simple specification of a color from the paper
+
       f->reflectance = factors[0] * custom_r + factors[1] * custom_g + factors[2] * custom_b;
+      //f->reflectance = Vector3D(0.5, 0.5, 0.5);
+      /*
+      if (f->reflectance[0] < -100) {
+        cout << f->reflectance << endl;
+      }
+      if (f->reflectance[0] > 100) {
+        cout << f->reflectance << endl;
+      }*/
+      for (int i = 0; i < 3; i++) {
+        sb_rgb[i].add(f->reflectance[i]);
+      }
       // f->transmittance = factors[0] * custom_r + factors[1] * custom_g + factors[2] * custom_b;
       // f->reflectance = (1.0/2.1) * custom_r + (0.1/2.1) * custom_g + (1.0/2.1) * custom_b;
       // f->reflectance = Vector3D(factors[0],factors[1],factors[2]);
     }
+
+    Stats s_rgb[3];
+    for (int i = 0; i < 3; i++) {
+      s_rgb[i] = sb_rgb[i].calc_stats();
+      sb_rgb[i].print_stats();
+    }
+
+    /*
+    for (FaceIter f : patch) {
+      for (int i = 0; i < 3; i++) {
+        f->reflectance[i] = (f->reflectance[i] - s_rgb[i].min)/(s_rgb[i].max - s_rgb[i].min);
+      }
+    }*/
     // Vector3D red = Vector3D(0.77,  0.015,  0.018);
     // Vector3D green = Vector3D(0.01,  0.012,  0.003);
 

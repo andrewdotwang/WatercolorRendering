@@ -361,6 +361,9 @@ class Halfedge : public HalfedgeElement {
     _face = face;
   }
 
+  Vector3D wc_dir;
+  float wc_mag;
+
  protected:
   HalfedgeIter _twin;  ///< halfedge on the "other side" of the edge
   HalfedgeIter _next;  ///< next halfedge around the current face

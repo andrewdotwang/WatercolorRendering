@@ -20,12 +20,22 @@ WaterColor::~WaterColor() {
 }
 
 StatsBuilder::StatsBuilder() {
-  sum = 0; 
+  sum = 0;
 }
 
 void StatsBuilder::add(float n) {
   nums.push_back(n);
   sum += n;
+}
+
+float StatsBuilder::get_mean() {
+  Stats s = calc_stats();
+  return s.mean;
+}
+
+float StatsBuilder::get_std() {
+  Stats s = calc_stats();
+  return s.std;
 }
 
 Stats StatsBuilder::calc_stats() {
@@ -284,7 +294,7 @@ void WaterColor::move_pigment(std::vector<FaceIter> patch) {
   //   max_xyz = max(max_xyz, ceil(max(max(abs(f->xyz_flow[0]), abs(f->xyz_flow[1])), abs(f->xyz_flow[2]))));
   // }
 
-  int timesteps = 10; // need to set timesteps if not following code from paper
+  int timesteps = 8; // need to set timesteps if not following code from paper
 
   for (int t = 0; t < timesteps; t++) {
     for (FaceIter f: patch) {
@@ -303,15 +313,15 @@ void WaterColor::move_pigment(std::vector<FaceIter> patch) {
       for (int i = 0; i < f->pigments_g.size(); i++) {
         float change = 0.0;
         if (neighbors[0]->is_wc) {
-          neighbors[0]->pigments_g_new[i] += max(0.0, 1.5 * f->xyz_flow[0] * f->pigments_g[i]);
+          neighbors[0]->pigments_g_new[i] += max(0.0, 1.0 * f->xyz_flow[0] * f->pigments_g[i]);
           change += max(0.0, f->xyz_flow[0] * f->pigments_g[i]);
         }
         if (neighbors[1]->is_wc) {
-          neighbors[1]->pigments_g_new[i] += max(0.0, 1.5 * f->xyz_flow[1] * f->pigments_g[i]);
+          neighbors[1]->pigments_g_new[i] += max(0.0, 1.0 * f->xyz_flow[1] * f->pigments_g[i]);
           change += max(0.0, f->xyz_flow[1] * f->pigments_g[i]);
         }
         if (neighbors[2]->is_wc) {
-          neighbors[2]->pigments_g_new[i] += max(0.0, 1.5 * f->xyz_flow[2] * f->pigments_g[i]);
+          neighbors[2]->pigments_g_new[i] += max(0.0, 1.0 * f->xyz_flow[2] * f->pigments_g[i]);
           change += max(0.0, f->xyz_flow[2] * f->pigments_g[i]);
         }
         f->pigments_g_new[i] -= change;
@@ -395,16 +405,23 @@ void WaterColor::simulate_mesh(GLScene::Mesh* elem) {
   Vector3D transmittance;
   */
   //for( FaceIter f = mesh.facesBegin(); f != mesh.facesEnd(); f++ ) //iterate over all faces
+  std::vector<std::vector<float>> patch_pigments;
+  patch_pigments.push_back({1.0, 0.1, 1.0});
+  patch_pigments.push_back({0.1, 1.0, 1.0});
+  patch_pigments.push_back({1.0, 1.0, 0.1});
+  patch_pigments.push_back({1.5, 0.5, 0.1});
+  patch_pigments.push_back({0.1, 1.5, 0.5});
+  patch_pigments.push_back({0.5, 0.1, 1.5});
 
   std::vector<std::vector<FaceIter>> patches;
 
   StatsBuilder sb;
-  for (int patch = 0; patch<5; patch++) {
+  for (int patch = 0; patch<6; patch++) {
 
-    std::vector<FaceIter> newPatch = get_patch(mesh, 1500, true);
+    std::vector<FaceIter> newPatch = get_patch(mesh, 2500, true);
     patches.push_back(newPatch);
 
-    
+
     //need to instantiate properties of each face "cell" for simulation
     for (FaceIter f: newPatch) {
       f->is_wc = true; // tells the renderer to use this face's watercolor reflectance instead of the default
@@ -426,14 +443,35 @@ void WaterColor::simulate_mesh(GLScene::Mesh* elem) {
 
       //all faces should have the same k pigments, varrying in property values
       //using placeholders, need to modify, can follow values in paper in figure 5
-      f->pigments_g = {1.0, 0.1, 1.0};
-      f->pigments_g_new = {1.0, 0.1, 1.0};
+      f->pigments_g = patch_pigments[patch];
+      f->pigments_g_new = patch_pigments[patch];
       f->density = {0.02, 0.09, 0.01};
       f->staining_power = {1.0, 1.0, 1.0};
       f->granulation = {0.63, 0.41, 0.31};
       f->pigments_d = {0.0, 0.0, 0.0};
     }
     sb.print_stats();
+    // if (f->height > sb.get_mean()-sb.get_std())
+    // std::cout << sb.get_mean()-sb.get_std() << endl;
+    for (FaceIter f: newPatch) {
+      if (f->height < sb.get_mean()-sb.get_std()/2.0) {
+        float rand = abs(random_uniform());
+        if (rand < 0.1) {
+          f->is_wc = false;
+        }
+      }
+      else if (f->height > sb.get_mean()+sb.get_std()/2.0) {
+        float rand = abs(random_uniform());
+        if (rand > 0.2) {
+          f->is_wc = false;
+        }
+      } else {
+        float rand = abs(random_uniform());
+        if (rand > 0.95) {
+          f->is_wc = false;
+        }
+      }
+    }
     sb.clear();
 
     //need to get a gradient of height differences for each direction, 3 in total

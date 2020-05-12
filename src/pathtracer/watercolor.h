@@ -53,7 +53,7 @@ namespace CGL {
       void transfer_pigment(std::vector<FaceIter> patch);
       void simulateCapillaryFlow(std::vector<FaceIter> patch);
 
-      
+
     };
 
     // I think we actually only need reflectance for rendering, probably could
@@ -96,6 +96,8 @@ namespace CGL {
 	        Stats calc_stats();
 	        void print_stats();
 	        void clear();
+          float get_mean();
+          float get_std();
 	    private:
 	    	std::vector<float> nums;
 	    	float sum;

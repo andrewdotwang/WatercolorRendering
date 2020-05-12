@@ -55,3 +55,19 @@ To properly display pigment colors, the Curtis 97 paper utilized the Kubelka-Mun
 One significant problem we ran into was similar but it was on the calculation of realistic velocities and flow. In the Curtis 97 simulation, the velocities were solved forward using Euler’s method in a 2D square grid.  Working with 3D meshes with faces as paper cells, we were unable to update velocities based on important qualities of watercolor on paper, such as pressure, saturation, and capacity of paper. Instead, we redefined our velocity updating function to depend more on the height gradients of faces and neighboring faces to account for the roughness of paper and less on those other properties. Another issue was getting the pigment rendering to simply appear more watercolor-esque. Due to rendering our 3D mesh objects under lighting and shading, it was difficult to see the differences in watercoloring - we were unable to calculate reflectance properly with the pigment absorption and scattering properties. Instead, we calculated final RGB values by simply scaling the pigment concentrations by their RGB value, and thickened pigment concentrations to better see the variation in color from pigment flow.
 
 The main lesson we learned is that it is not easy to have a simple 1-1 implentation from the reference paper, especially when there are more components involved. We originally presumed that this project would be mostly about implementing what we saw in the Curtis 97 paper, but later realized that it became much more difficult - namely because we were rendering in 3D with lighting involved. As such, we should have more carefully planned out our project and then gradually add extra features, instead of directly writing code without giving thought to the overall implementation details. Lastly, we all learned to appreciate simulation renderers much more - there is much more to physical watercolor fluid simulations than we expected and it was very rewarding to tackle it with our own ideas. It is eye opening to note that there are many different ways to approach the same basic idea of watercolor-esque non-photorealistic rendering. We learned a great deal more about optical compositing to display color, physical paper and fluid properties, and special watercolor features.
+
+## Results
+UPLOAD PHOTOS HERE
+
+## References
+* [Non-Photorealistic Rendering
+using Watercolor Inspired Textures and Illumination](https://www.dimap.ufrn.br/~motta/dim102/Projetos/NPR/Lume_PG01.pdf)
+* [ART DIRECTED WATERCOLOR SHADER FOR NON-PHOTOREALISTIC
+RENDERING WITH A FOCUS ON REFLECTIONS](https://core.ac.uk/download/pdf/154406433.pdf)
+* We used code from project 3.1 as a starting point for our renderer.
+* [Computer-Generated Watercolor](https://www.cs.princeton.edu/courses/archive/fall00/cs597b/papers/curtis97.pdf)
+
+## Contributions
+* Andrew: Mainly focused on implementing and re-designing fluid simulation with algorithms from the Curtis 97 reference paper, and implemented extra features such as dry-brush effect.
+* Evan: Mainly focused on modifying existing project 3-1 code to render water colors instead. Helped change and re-design fluid simulation functions.
+* Johnathan: Mainly focused on implementing fluid simulation with algorithms from the Curtis 97 reference paper, and tweaking parameters to find optimal simulation values for most watercolor-esque results.

@@ -44,7 +44,7 @@ The dragon below shows the effects of paints overlapping when using the Kubelka-
 
 The dragon below is a poor result that we got when we didn't try to account for the underlying color of the mesh. It turned out that including the underlying mesh color as an implicit "layer of paint" was crucial to generating the above images so they did not end up looking extremely saturated with paint like the image below.
 
-![dragon rendered with 100 timesteps of simulation](/docs/images/dragon_64_32_no_meshbias_100.png)
+![dragon rendered with 100 timesteps of simulation](../images/dragon_64_32_no_meshbias_100.png)
 
 ## Video
 https://youtu.be/FOn81lEtZzE

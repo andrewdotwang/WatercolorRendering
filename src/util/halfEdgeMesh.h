@@ -363,6 +363,7 @@ class Halfedge : public HalfedgeElement {
 
   Vector3D wc_dir;
   float wc_mag;
+  float new_wc_mag;
 
  protected:
   HalfedgeIter _twin;  ///< halfedge on the "other side" of the edge

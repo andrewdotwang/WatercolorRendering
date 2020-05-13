@@ -40,6 +40,7 @@ Mesh::Mesh(Collada::PolymeshInfo& polyMesh, const Matrix4x4& transform, string o
   }
 
   name = obj_name;
+  //cout << name <<endl;
 }
 
 void Mesh::render_in_opengl() const {

@@ -147,12 +147,21 @@ SceneObjects::Scene *Scene::get_static_scene() {
 
 std::vector<SceneObject *> Scene::get_wc_objects() {
   std::vector<SceneObject *> ret;
+  std::vector<std::string> allowed = {"Mesh", "dragon"};
   for (SceneObject *obj : objects) {
     //NOTE: change this conditional to allow more than just meshes to get watercolored.
     //we would likely want a new interface for "watercolorable" objects
     // that defines the various functions needed to (a) simulate and (b) render simulated
     // objects.
-    if (dynamic_cast<GLScene::Mesh*>(obj) && obj->get_name().compare("Mesh") == 0) { 
+    
+    bool obj_allowed = false;
+    for (std::string name : allowed) {
+      if (dynamic_cast<GLScene::Mesh*>(obj) && (obj->get_name().compare(name) == 0)) {
+        obj_allowed = true;
+      }
+    }
+
+    if (obj_allowed) { 
       cout << "adding " << obj->get_name() << " to watercolor objects" << endl;
       ret.push_back(obj);
     }

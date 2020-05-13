@@ -137,6 +137,10 @@ public:
     return Vector3D( rc * x, rc * y, rc * z );
   }
 
+  inline Vector3D operator/(const Vector3D& v) const {
+    return Vector3D(x / v.x, y / v.y, z / v.z);
+  }
+
   // addition / assignment
   inline void operator+=( const Vector3D& v ) {
 #ifdef __AVX__

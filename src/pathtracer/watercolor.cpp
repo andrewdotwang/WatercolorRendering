@@ -206,8 +206,8 @@ float WaterColor::face_height(FaceIter f) {
 // main function for moving water in the shallow water layer
 void WaterColor::move_water(std::vector<FaceIter> patch) {
   update_velocities(patch);
-  // relax_divergence(patch);
-  // flow_outward(patch);
+  relax_divergence(patch);
+  flow_outward(patch);
 }
 
 void WaterColor::get_timescale(std::vector<FaceIter>& patch, float* timesteps, float* dt) {
@@ -245,8 +245,8 @@ void WaterColor::update_velocities(std::vector<FaceIter> patch) {
   get_timescale(patch, &timesteps, &dt);
 
   //cout << "timesteps " << timesteps << endl;
-  //StatsBuilder sb;
-  //sb.clear();
+  StatsBuilder sb;
+  sb.clear();
 
   for (int t = 0; t < int(timesteps); t++) {
     for (FaceIter f: patch) {
@@ -291,7 +291,8 @@ void WaterColor::update_velocities(std::vector<FaceIter> patch) {
       Vector3D f_cent = face_centroid(f);
       float tot_flow = 0.;
       for (int edge = 0; edge < 3; edge++) {
-        if (h->isBoundary()) {
+        if (h->isBoundary() || !h->twin()->face()->is_wc) {
+          h->new_wc_mag = 0.; // boundary conditions
           continue;
         }
 
@@ -328,9 +329,11 @@ void WaterColor::update_velocities(std::vector<FaceIter> patch) {
 
         FaceIter f2 = h->twin()->face();
 
-        h->wc_mag = max(0.0001f, (float)(u_ip5j + dt * (A - (mu * B) + f->pressure - f2->pressure - kappa * u_ip5j)));
+        //sb.add(f->pressure - f2->pressure);
+
+        h->new_wc_mag = max(0.0001f, (float)(u_ip5j + dt * (A - (mu * B) + f->pressure - f2->pressure - kappa * u_ip5j)));
         //NOTE: might be better to store updates in a "new" variable then apply them all when done. but eh wtvr.
-        tot_flow += h->wc_mag;
+        tot_flow += h->new_wc_mag;
 
         h = h->next();
       }
@@ -338,13 +341,22 @@ void WaterColor::update_velocities(std::vector<FaceIter> patch) {
       if (tot_flow > 1.) {
         h = f->halfedge();
         for (int edge = 0; edge < 3; edge ++) {
-          h->wc_mag = max(0.0001f, (float)(h->wc_mag / tot_flow) - 0.001f); // we want positive numbers that add up to a little less than 1
+          h->new_wc_mag = max(0.0001f, (float)(h->new_wc_mag / tot_flow) - 0.001f); // we want positive numbers that add up to a little less than 1
           //sb.add(h->wc_mag);
           h = h->next();
         }
       }
+
+      h = f->halfedge();
+      for (int edge = 0; edge < 3; edge ++) {
+        h->wc_mag = h->new_wc_mag; // update actual magnitudes to new computations
+        //sb.add(h->wc_mag);
+        h = h->next();
+      }
+
     }
   }
+  //cout << "pressure diff" << endl;
   //sb.print_stats();
 }
 
@@ -383,15 +395,76 @@ Vector3D WaterColor::proj(Vector3D& v, Vector3D& axis) {
     }
     */
 
-//relaxing the divergence of the velocity field ???
+//relaxing the divergence of the velocity field
 void WaterColor::relax_divergence(std::vector<FaceIter> patch) {
+  // instead of the edge-centric mapping we did in update_velocities,
+  // in this function we have a much simpler conceptual approach. 
+  // delta is a scaled form of the total divergence, which is simply
+  // the sum of wc_mag for a given face
+  int t = 0;
+  float tau = 0.01;
+  float delta_max = tau + 1; 
+  float delta;
+  float xi = 0.1;
+
+  StatsBuilder sb;
+  HalfedgeIter h;
+  while(t < 50 && delta_max > tau) {
+    delta_max = 0.;
+    for (FaceIter f : patch) {
+
+      float tot_div = 0;
+      h = f->halfedge();
+      for (int i = 0; i < 3; i++) {
+        tot_div += h->wc_mag;
+        //tot_div -= h->twin()->wc_mag;
+        h = h->next();
+      }
+      delta = - xi * tot_div; //NOTE there is a typo in the paper, if you look at  "Realistic animation of liquids." p7-8,
+                              // which Curtis '97 cites, Curtis '97  are missing a minus sign...
+
+      f->pressure = max(f->pressure + delta, 0.f);
+      h = f->halfedge();
+      float tot_flow = 0.;
+      for (int i = 0; i < 3; i++) {
+        h->new_wc_mag = max(h->wc_mag + delta, 0.0001f); 
+        tot_flow += h->new_wc_mag;
+        h = h->next();
+      }
+
+      if (tot_flow > 1.) {
+        h = f->halfedge();
+        for (int edge = 0; edge < 3; edge ++) {
+          h->new_wc_mag = max(0.0001f, (float)(h->new_wc_mag / tot_flow) - 0.001f); // we want positive numbers that add up to a little less than 1
+          //sb.add(h->wc_mag);
+          h = h->next();
+        }
+      }
+
+      delta_max = max(delta_max, abs(delta));
+      sb.add(delta_max);
+    }
+
+    for (FaceIter f : patch) {
+      h = f->halfedge();
+      for (int i = 0; i < 3; i++) {
+        h->wc_mag = h->new_wc_mag; 
+        //sb.add(h->wc_mag);
+        h = h->next();
+      }
+    }
+    t+= 1;
+  }
+  //cout << " relax div stats" << endl;
+  //sb.print_stats();
+  
   return;
 }
 
 //edge darkening, paper applies a gausian blur on water mask (faces with is_wc)
 //can try another brute force way of only dealing with edge faces with is_wc
 void WaterColor::flow_outward(std::vector<FaceIter> patch) {
-  float remove_factor = 0.9; //tweak parameters??
+  float remove_factor = 0.1; //tweak parameters??
 
   for (FaceIter f: patch) {
 
@@ -421,7 +494,7 @@ void WaterColor::move_pigment(std::vector<FaceIter> patch) {
   get_timescale(patch, &ts, &dt);
   int timesteps = int(ts);
 
-  cout << "timesteps " << timesteps << endl;
+  //cout << "timesteps " << timesteps << endl;
 
   StatsBuilder sb;
   sb.clear();
@@ -465,7 +538,7 @@ void WaterColor::move_pigment(std::vector<FaceIter> patch) {
       f->pigments_g = f->pigments_g_new;
     }
   }
-  sb.print_stats();
+  //sb.print_stats();
 
 }
 
@@ -541,13 +614,55 @@ void WaterColor::simulate_mesh(GLScene::Mesh* elem) {
   */
   //for( FaceIter f = mesh.facesBegin(); f != mesh.facesEnd(); f++ ) //iterate over all faces
 
+  WC_Color QUINACRIDONE_ROSE = WC_Color(Vector3D(0.22, 1.47, 0.57), Vector3D(0.05, 0.003, 0.03), 0.02, 5.5, 0.81);
+  WC_Color INDIAN_RED        = WC_Color(Vector3D(0.46, 1.07, 1.50), Vector3D(1.28, 0.38, 0.21),  0.05, 7.0, 0.40);
+  WC_Color CADMIUM_YELLOW    = WC_Color(Vector3D(0.10, 0.36, 3.45), Vector3D(0.97, 0.65, 0.007), 0.05, 3.4, 0.81);
+  WC_Color HOOKERS_GREEN     = WC_Color(Vector3D(1.62, 0.61, 1.64), Vector3D(0.01, 0.012, 0.003),0.09, 1.0, 0.41);
+  WC_Color CERULEAN_BLUE     = WC_Color(Vector3D(1.52, 0.32, 0.25), Vector3D(0.06, 0.26, 0.40),  0.01, 1.0, 0.31);
+
+  std::vector<WC_Color> all_colors = {QUINACRIDONE_ROSE, CADMIUM_YELLOW, CERULEAN_BLUE, INDIAN_RED};
+  std::vector<WC_Color> all_colors_def = all_colors;
+
+  WC_Color mesh_default = WC_Color(Vector3D(0.5, 0.5, 0.5)); // could probably get this directly from collada?
+  all_colors_def.push_back(mesh_default);
+
+
+  //num of rows is num of patches, num of cols is number of colors in all_colors
+  //might adapt this in the future
+  std::vector<std::vector<float>> colors_per_patch = {{1.0, 0.0, 0.0, 0.0},
+                                                      {1.0, 0.0, 0.0, 0.0},
+                                                      {1.0, 0.0, 0.0, 0.0},
+                                                      {0.0, 1.0, 0.0, 0.0},
+                                                      {0.0, 1.0, 0.0, 0.0},
+                                                      {0.0, 1.0, 0.0, 0.0},
+                                                      {0.0, 0.0, 1.0, 0.0},
+                                                      {0.0, 0.0, 1.0, 0.0},
+                                                      {0.0, 0.0, 1.0, 0.0},
+                                                      {0.0, 1.0, 1.0, 0.0},
+                                                      {0.0, 0.0, 1.0, 0.0},
+                                                      {0.0, 0.0, 1.0, 0.0},
+                                                      {0.0, 0.0, 0.0, 1.0},
+                                                      {0.0, 0.0, 0.0, 1.0}
+                                                    };
+
+  std::vector<float> densities;
+  std::vector<float> stains;
+  std::vector<float> grans;
+  std::vector<float> pigments_d;
+  for (WC_Color c: all_colors) {
+    densities.push_back(c.density);
+    stains.push_back(c.stain);
+    grans.push_back(c.granulation);
+    pigments_d.push_back(0.);
+  }
+
   std::vector<std::vector<FaceIter>> patches;
 
   StatsBuilder sb;
   Vector3D f_cent;
-  for (int patch = 0; patch<5; patch++) {
+  for (int patch = 0; patch<colors_per_patch.size(); patch++) {
 
-    std::vector<FaceIter> newPatch = get_patch(mesh, 200, true);
+    std::vector<FaceIter> newPatch = get_patch(mesh, 400, true);
     patches.push_back(newPatch);
 
     
@@ -572,12 +687,21 @@ void WaterColor::simulate_mesh(GLScene::Mesh* elem) {
 
       //all faces should have the same k pigments, varrying in property values
       //using placeholders, need to modify, can follow values in paper in figure 5
-      f->pigments_g = {1.0, 0.1, 1.0};
-      f->pigments_g_new = {1.0, 0.1, 1.0};
-      f->density = {0.02, 0.09, 0.01};
-      f->staining_power = {1.0, 1.0, 1.0};
-      f->granulation = {0.63, 0.41, 0.31};
-      f->pigments_d = {0.0, 0.0, 0.0};
+      std::vector<float> new_cpp;
+      float val;
+      for (int i = 0; i < colors_per_patch[patch].size(); i++) {
+        val = colors_per_patch[patch][i];
+        if (i < f->pigments_g.size()) {
+          val += f->pigments_g[i];
+        }
+        new_cpp.push_back(val);
+      }
+      f->pigments_g = new_cpp;
+      f->pigments_g_new = new_cpp;
+      f->density = densities;
+      f->staining_power = stains;
+      f->granulation = grans;
+      f->pigments_d = pigments_d;
 
       HalfedgeIter& h = f->halfedge();
       f_cent = face_centroid(f);
@@ -593,10 +717,12 @@ void WaterColor::simulate_mesh(GLScene::Mesh* elem) {
     Stats s = sb.calc_stats();
     sb.clear();
     //scale to (0, 1)
+    /*
     for (FaceIter f: newPatch) {
       f->height = (f->height - s.min)/(s.max - s.min);
       //sb.add(f->height);
     }
+    */
 
     //sb.print_stats();
     sb.clear();
@@ -628,7 +754,7 @@ void WaterColor::simulate_mesh(GLScene::Mesh* elem) {
   // end result will result in each face having multiple properties of pigments
   // find a way to set reflectance and transmittance values of the face to show true water color pigments
   for (std::vector<FaceIter> patch : patches) {
-    int timesteps = 15;
+    int timesteps = 1000;
     for (int i = 0; i < timesteps; i++) {
       // for(FaceIter f : patch) {
       //   std::cout << f->xyz_flow[0] << "\t" << f->xyz_flow[1] << "\t" << f->xyz_flow[2] << endl;
@@ -661,6 +787,8 @@ void WaterColor::simulate_mesh(GLScene::Mesh* elem) {
   for (int i = 0; i < 3; i++) {
     sb_rgb[i] = StatsBuilder();
   }
+
+  int which_patch = 0;
   for (std::vector<FaceIter> patch : patches) {
     // for(FaceIter f : patch) {
     //   //example render of heightmap
@@ -684,11 +812,13 @@ void WaterColor::simulate_mesh(GLScene::Mesh* elem) {
       for (int i = 0; i < f->pigments_d.size(); i++) {
         pigment_d_sum += f->pigments_g[i] + f->pigments_d[i];
       }
+      float to_push;
+      float tot_pushed = 1e-5;
       for (int i = 0; i < f->pigments_d.size(); i++) {
         if (pigment_d_sum == 0) {
-          factors.push_back(0.0);
+          to_push = 0.0;
         } else {
-          factors.push_back((f->pigments_g[i]+f->pigments_d[i])/1.2);
+          to_push = (f->pigments_g[i]+f->pigments_d[i]);//1.2;
           /*
           if (f->pigments_d[i] < -100) {
             cout << "p_d" << i << " " << f->pigments_d[i] <<endl;
@@ -699,18 +829,30 @@ void WaterColor::simulate_mesh(GLScene::Mesh* elem) {
           */
           // std::cout << (f->pigments_g[i] + f->pigments_d[i])/pigment_d_sum << endl;
         }
+
+        factors.push_back(to_push);
+        tot_pushed += to_push;
       }
 
-      Vector3D custom_r = Vector3D(207.0/255.0, 82.0/255.0,  75.0/255.0);
-      Vector3D custom_g = Vector3D(87.0/255.0, 162.0/255.0,  75.0/255.0);
-      Vector3D custom_b = Vector3D(64.0/255.0, 125.0/255.0,  237.0/255.0);
+      //Vector3D custom_r = Vector3D(207.0/255.0, 82.0/255.0,  75.0/255.0);
+      //Vector3D custom_g = Vector3D(87.0/255.0, 162.0/255.0,  75.0/255.0);
+      //Vector3D custom_b = Vector3D(64.0/255.0, 125.0/255.0,  237.0/255.0);
       //std::cout << factors[0] << "\t" << factors[1] << "\t" << factors[2] << endl;
       // std::cout << factors[0] + factors[1] + factors[2] << endl;
 
       //TODO: implement reflectance/transmittance layering
       // TODO: data structure to allow simple specification of a color from the paper
 
-      f->reflectance = factors[0] * custom_r + factors[1] * custom_g + factors[2] * custom_b;
+      std::vector<float> factors_def = factors;
+      factors_def.push_back(1.0);
+
+      Vector3D refl;
+      Vector3D trans;
+      float tot_thickness;
+      calc_comp(all_colors_def, factors_def, &tot_thickness).calc_optics(tot_thickness, &trans, &refl);
+
+      f->reflectance = refl;
+      //f->reflectance = factors[0] * custom_r + factors[1] * custom_g + factors[2] * custom_b;
       //f->reflectance = Vector3D(0.5, 0.5, 0.5);
       /*
       if (f->reflectance[0] < -100) {
@@ -741,10 +883,72 @@ void WaterColor::simulate_mesh(GLScene::Mesh* elem) {
     }*/
     // Vector3D red = Vector3D(0.77,  0.015,  0.018);
     // Vector3D green = Vector3D(0.01,  0.012,  0.003);
+    which_patch += 1;
+  }
+}
+
+  WC_Color::WC_Color(Vector3D K2, Vector3D S2, float dens, float st, float gran) {
+    K = K2;
+    S = S2;
+    density = dens;
+    stain = st;
+    granulation = gran;
+
+    a = (K/S) + 1.;
+    //cout << S << K << endl;
+    Vector3D tmp = a * a - 1;
+    b = Vector3D(sqrt(tmp[0]), sqrt(tmp[1]), sqrt(tmp[2]));
 
   }
+  WC_Color::WC_Color(Vector3D raw_color) {
+    //a = (raw_color + 1./raw_color) * 0.5;
+
+    a = ((raw_color + 1.)/raw_color) * 0.5; // assume R_w = 0
+
+    Vector3D tmp = a * a - 1;
+    b = Vector3D(sqrt(tmp[0]), sqrt(tmp[1]), sqrt(tmp[2]));
+
+    //reciprocal of the paper bc we use atanh
+    Vector3D arg = (b * (- raw_color + 1.))/ (b * b - ((a - raw_color) * (a - 1.)));
+    //Vector3D arg = b / (b * b - (a * (a - 1.))); // assume R_w = 0
+    S = (1./b) * Vector3D(atanh(arg[0]), atanh(arg[1]), atanh(arg[2]));
+    cout << a << b << arg << S << endl;
+    K = S * (a - 1.);
+  }
+
+  void WC_Color::calc_optics(float thickness, Vector3D *trans, Vector3D *refl) {
+    Vector3D bSx = b * S * thickness;
+    Vector3D sinh_bSx = Vector3D(sinh(bSx[0]), sinh(bSx[1]), sinh(bSx[2]));
+    Vector3D cosh_bSx = Vector3D(cosh(bSx[0]), cosh(bSx[1]), cosh(bSx[2]));
+
+    Vector3D c = a * sinh_bSx + b * cosh_bSx;
+
+    *trans = b/c;
+    *refl = sinh_bSx / c;
+  }
+
+  WC_Color WaterColor::calc_comp(std::vector<WC_Color>& colors, std::vector<float> thicknesses, float *tot_thickness) {
+    // we can either treat the pigments as being in different "layers" or the same.
+    // this approach is "same-layer", see paragraph 4 of section 5.2 of the paper.
+
+    *tot_thickness = 0.;
+    for (int i = 0; i < colors.size(); i++) {
+      *tot_thickness = *tot_thickness + thicknesses[i];
+    }
 
 
-}
+    Vector3D tot_k = Vector3D();
+    Vector3D tot_s = Vector3D();
+    for (int i = 0; i < colors.size(); i++) {
+      float prop = thicknesses[i] / (*tot_thickness + 1e-4);
+      tot_k = tot_k + colors[i].K * prop;
+      tot_s = tot_s + colors[i].S * prop;
+      //cout << colors[i].K << colors[i].S << endl;
+    }
+
+    //cout << tot_k << tot_s << endl;
+    return WC_Color(tot_k, tot_s, 0., 0., 0.);
+
+  }
 
 } // namespace CGL

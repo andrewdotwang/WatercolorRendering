@@ -24,8 +24,27 @@ using CGL::SceneObjects::BVHAccel;
 #include <queue>
 #include <random>
 #include <time.h>
+#include <math.h>
 
 namespace CGL {
+
+	class WC_Color {
+		public:
+	        WC_Color(Vector3D K2, Vector3D S2, float dens, float st, float gran);
+	        WC_Color(Vector3D raw_color);
+
+	        void calc_optics(float thickness, Vector3D *trans, Vector3D *refl);
+	        //void calc_comp(Color& c2, Vector3D *trans, Vector3D *refl);
+	    
+	    	Vector3D K;
+	    	Vector3D S;
+	    	float density;
+	    	float stain;
+	    	float granulation;
+		private:
+	    	Vector3D a;
+	    	Vector3D b;
+	};
 
     class WaterColor {
     public:
@@ -61,6 +80,8 @@ namespace CGL {
       
       float mu = 0.1;
       float kappa = 0.01;
+
+      WC_Color calc_comp(std::vector<WC_Color>& colors, std::vector<float> thicknesses, float *tot_thickness);
     };
 
     // I think we actually only need reflectance for rendering, probably could
@@ -107,7 +128,6 @@ namespace CGL {
 	    	std::vector<float> nums;
 	    	float sum;
 	};
-
 
 
 }  // namespace CGL

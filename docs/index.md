@@ -26,6 +26,9 @@ The main lesson we learned is that a paper writeup is not as simple as 1-1 with 
 ## Results
 UPLOAD PHOTOS HERE
 
+## Video
+https://youtu.be/FOn81lEtZzE
+
 ## References
 * [Non-Photorealistic Rendering
 using Watercolor Inspired Textures and Illumination](https://www.dimap.ufrn.br/~motta/dim102/Projetos/NPR/Lume_PG01.pdf)

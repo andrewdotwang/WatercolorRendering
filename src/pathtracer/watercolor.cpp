@@ -20,12 +20,22 @@ WaterColor::~WaterColor() {
 }
 
 StatsBuilder::StatsBuilder() {
-  sum = 0; 
+  sum = 0;
 }
 
 void StatsBuilder::add(float n) {
   nums.push_back(n);
   sum += n;
+}
+
+float StatsBuilder::get_mean() {
+  Stats s = calc_stats();
+  return s.mean;
+}
+
+float StatsBuilder::get_std() {
+  Stats s = calc_stats();
+  return s.std;
 }
 
 Stats StatsBuilder::calc_stats() {
@@ -613,6 +623,13 @@ void WaterColor::simulate_mesh(GLScene::Mesh* elem) {
   Vector3D transmittance;
   */
   //for( FaceIter f = mesh.facesBegin(); f != mesh.facesEnd(); f++ ) //iterate over all faces
+  std::vector<std::vector<float>> patch_pigments;
+  patch_pigments.push_back({1.0, 0.1, 1.0});
+  patch_pigments.push_back({0.1, 1.0, 1.0});
+  patch_pigments.push_back({1.0, 1.0, 0.1});
+  patch_pigments.push_back({1.5, 0.5, 0.1});
+  patch_pigments.push_back({0.1, 1.5, 0.5});
+  patch_pigments.push_back({0.5, 0.1, 1.5});
 
   WC_Color QUINACRIDONE_ROSE = WC_Color(Vector3D(0.22, 1.47, 0.57), Vector3D(0.05, 0.003, 0.03), 0.02, 5.5, 0.81);
   WC_Color INDIAN_RED        = WC_Color(Vector3D(0.46, 1.07, 1.50), Vector3D(1.28, 0.38, 0.21),  0.05, 7.0, 0.40);
@@ -665,7 +682,7 @@ void WaterColor::simulate_mesh(GLScene::Mesh* elem) {
     std::vector<FaceIter> newPatch = get_patch(mesh, 400, true);
     patches.push_back(newPatch);
 
-    
+
     //need to instantiate properties of each face "cell" for simulation
     for (FaceIter f: newPatch) {
       f->is_wc = true; // tells the renderer to use this face's watercolor reflectance instead of the default
@@ -725,6 +742,32 @@ void WaterColor::simulate_mesh(GLScene::Mesh* elem) {
     */
 
     //sb.print_stats();
+    // if (f->height > sb.get_mean()-sb.get_std())
+    // std::cout << sb.get_mean()-sb.get_std() << endl;
+
+    /*
+    //drybrush code
+    for (FaceIter f: newPatch) {
+      if (f->height < sb.get_mean()-sb.get_std()/2.0) {
+        float rand = abs(random_uniform());
+        if (rand < 0.1) {
+          f->is_wc = false;
+        }
+      }
+      else if (f->height > sb.get_mean()+sb.get_std()/2.0) {
+        float rand = abs(random_uniform());
+        if (rand > 0.2) {
+          f->is_wc = false;
+        }
+      } else {
+        float rand = abs(random_uniform());
+        if (rand > 0.95) {
+          f->is_wc = false;
+        }
+      }
+    }
+    */
+
     sb.clear();
 
     //need to get a gradient of height differences for each direction, 3 in total

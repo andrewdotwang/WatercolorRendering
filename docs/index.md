@@ -24,8 +24,27 @@ One significant problem we ran into was similar but it was on the calculation of
 The main lesson we learned is that a paper writeup is not as simple as 1-1 with an implementation, especially when there are more components involved. We originally presumed that this project would be mostly about implementing what we saw in the Curtis 97 paper, but later realized that it became much more difficult - namely because we were rendering in 3D with lighting involved. As such, we should have more carefully planned out our project and then gradually add features, instead of directly writing code without giving thought to the overall implementation details. Lastly, we all learned to appreciate simulation renderers much more - there is much more to physical watercolor fluid simulations than we expected and it was very rewarding to tackle it with our own ideas. We learned a great deal more about optical compositing to display color, physical paper and fluid properties, and special watercolor features.
 
 ## Results
-
+bunny rendered with 10 timesteps of simulation
 ![bunny rendered with 10 timesteps of simulation](/docs/images/bunny_10.png)
+
+bunny rendered with 100 timesteps of simulation
+![bunny rendered with 100 timesteps of simulation](/docs/images/bunny_100.png)
+
+bunny rendered with 1000 timesteps of simulation
+![bunny rendered with 1000 timesteps of simulation](/docs/images/bunny_1000.png)
+
+In images with more simulation timesteps, the final rendering appears "drier", therefore making it look more like true watercolor.
+However, it can sometimes be hard to see watercoloring without strong illumination. The following images of dragons look more watercolor-esque because the scene is well-illuminated.
+
+![dragon rendered with 100 timesteps of simulation](/docs/images/dragon_64_32_colorful.png)
+
+The dragon below shows the effects of paints overlapping when using the Kubelka-Munk model; the purple and yellow paints that overlap create an orange color.
+
+![dragon rendered with 100 timesteps of simulation](/docs/images/dragon_64_32_overlap_100.png)
+
+The dragon below is a poor result that we got when we didn't try to account for the underlying color of the mesh. It turned out that including the underlying mesh color as an implicit "layer of paint" was crucial to generating the above images so they did not end up looking extremely saturated with paint like the image below.
+
+![dragon rendered with 100 timesteps of simulation](/docs/images/dragon_64_32_no_meshbias_100.png)
 
 ## Video
 https://youtu.be/FOn81lEtZzE

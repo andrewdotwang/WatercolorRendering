@@ -87,7 +87,7 @@ RENDERING WITH A FOCUS ON REFLECTIONS](https://core.ac.uk/download/pdf/154406433
 * Johnathan: Implemented fluid simulation with algorithms from Curtis et al., 1997, and tweaked parameters to find optimal simulation values for most watercolor-esque results.
 
 ## Code: *MoveWater*, *MovePigment*, *TransferPigment*, *SimulateCapillaryFlow*, and *Watercolor Mesh Simulation*
-Full project code can be found at: https://github.com/andrewdotwang/184final
+Full project code can be found at: https://github.com/andrewdotwang/WatercolorRendering
 ### MoveWater
 ```C++
 // main function for moving water in the shallow water layer
@@ -440,21 +440,7 @@ void WaterColor::simulate_mesh(GLScene::Mesh* elem) {
   
   //num of rows is num of patches, num of cols is number of colors in all_colors
   //might adapt this in the future
-  std::vector<std::vector<float>> colors_per_patch = {{1.0, 0.0, 0.0, 0.0},
-                                                      {1.0, 0.0, 0.0, 0.0},
-                                                      {1.0, 0.0, 0.0, 0.0},
-                                                      {0.0, 1.0, 0.0, 0.0},
-                                                      {0.0, 1.0, 0.0, 0.0},
-                                                      {0.0, 1.0, 0.0, 0.0},
-                                                      {0.0, 0.0, 1.0, 0.0},
-                                                      {0.0, 0.0, 1.0, 0.0},
-                                                      {0.0, 0.0, 1.0, 0.0},
-                                                      {0.0, 1.0, 1.0, 0.0},
-                                                      {0.0, 0.0, 1.0, 0.0},
-                                                      {0.0, 0.0, 1.0, 0.0},
-                                                      {0.0, 0.0, 0.0, 1.0},
-                                                      {0.0, 0.0, 0.0, 1.0}
-                                                    };
+  std::vector<std::vector<float>> colors_per_patch = {{1.0, 0.0, 0.0, 0.0}, {1.0, 0.0, 0.0, 0.0}, {1.0, 0.0, 0.0, 0.0}, {0.0, 1.0, 0.0, 0.0}, {0.0, 1.0, 0.0, 0.0}, {0.0, 1.0, 0.0, 0.0}, {0.0, 0.0, 1.0, 0.0}, {0.0, 0.0, 1.0, 0.0}, {0.0, 0.0, 1.0, 0.0}, {0.0, 1.0, 1.0, 0.0}, {0.0, 0.0, 1.0, 0.0}, {0.0, 0.0, 1.0, 0.0}, {0.0, 0.0, 0.0, 1.0}, {0.0, 0.0, 0.0, 1.0}};
 
   std::vector<float> densities;
   std::vector<float> stains;

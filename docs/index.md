@@ -4,7 +4,7 @@
 This project aims to create non-photorealistic rendering of watercolor-esque images. Drawing inspiration from existing literature on generative rendering of watercolor onto 2D spaces as a pre-processing simulation (Curtis et al., 1997), we apply similar ideas to 3D rendering and implement watercolor style coloring for meshes in 3D image space. Our approach leverages and builds upon the previously completed ray-tracing renderer as a base, and utilizes techniques from Curtis et al., 1997 to allow for physical fluid simulation and a pigment based lighting model for water color shading. We present two watercolor-esque 3D renderers; one where additional simulation timesteps make the final rendering “drier” for realistic watercolor behavior, and another where we also apply the Kubelka-Munk compositing model to illustrate effects of paints overlapping.
 
 ## Technical Approach
-Several approaches (Liu and Ma, 2001; Cheng,  2017) to generating  watercolor-esque images use post-processing techniques such as shaders and mathematical color transformations. Instead, we draw ideas of watercolor physical simulation from Curtis et al., 1997 and apply them to 3D space, as we believe that actual simulation will most accurately mimic watercolor behaviors. Our project consists of two main components: the watercolor fluid simulation and the renderer. We describe the specific implementation of these components in the sections below.
+Several approaches (Liu and Ma, 2001; Cheng,  2017) to generate watercolor-esque images use post-processing techniques such as shaders and mathematical color transformations. Instead, we draw ideas of watercolor physical simulation from Curtis et al., 1997 and apply them to 3D space, as we believe that actual simulation will most accurately mimic watercolor behaviors. Our project consists of two main components: the watercolor fluid simulation and the renderer. We describe the specific implementation of these components in the sections below.
 
 ### Fluid Simulation
 The goal for the simulation is to create a 3-layer fluid simulation that accounts for pigment movement across mesh cells in water as well as absorption into and desorption from the “paper” mesh. The fluid simulation can be broken down into three layers - the shallow-water layer, the pigment-deposition layer, and the capillary layer. The shallow water layer is where the water and pigment flow above the surface of the paper. The pigment-deposition layer is where the pigment is adsorbed into and desorbed from the paper. Finally, the capillary layer is where the water is absorbed into the paper and diffused by capillary action, thus creating the back run effect.
@@ -413,9 +413,8 @@ void WaterColor::simulateCapillaryFlow(std::vector<FaceIter> patch) {
 ```C++
 // Simulates watercolor paint spreading over a mesh.
 // NOTE: we eventually will need to have a way of specifying how
-//       the brush-strokes are specified. For now we'll just initialize
-//       stuff however we want, i.e. uniformly at random, or maybe using
-//       the z coordinate(?) of the mesh element for testing.
+//       the brush-strokes are specified. For now, we'll just initialize
+//       uniformly at random or maybe using the z coordinate(?) of the mesh element for testing.
 void WaterColor::simulate_mesh(GLScene::Mesh* elem) {
   HalfedgeMesh& mesh = elem->get_underlying_mesh();
 

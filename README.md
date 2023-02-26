@@ -1,1 +1,1 @@
-# 184final
+# CS184 Final Project: Watercolor-esque Non-Photorealistic Rendering

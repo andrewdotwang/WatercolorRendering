@@ -1,5 +1,5 @@
-# 184 Final Project Report: Watercolor-esque Non-Photorealistic Rendering
-
+# Watercolor-esque Non-Photorealistic Rendering
+Final project report by Andrew Wang, Evan Lohn, and Johnathan Zhou for CS184 - Computer Graphics and Imaging - UC Berkeley, Spring 2020
 ## Abstract
 This project aims to create non-photorealistic rendering of watercolor-esque images. Drawing inspiration from existing literature on generative rendering of watercolor onto 2D spaces as a pre-processing simulation (Curtis et al., 1997), we apply similar ideas to 3D rendering and implement watercolor style coloring for meshes in 3D image space. Our approach leverages and builds upon the previously completed ray-tracing renderer as a base, and utilizes techniques from Curtis et al., 1997 to allow for physical fluid simulation and a pigment based lighting model for water color shading. We present two watercolor-esque 3D renderers; one where additional simulation timesteps make the final rendering “drier” for realistic watercolor behavior, and another where we also apply the Kubelka-Munk compositing model to illustrate effects of paints overlapping.
 
@@ -15,7 +15,7 @@ We closely follow the 3-layer fluid simulation algorithms from Curtis et al., 19
 In this project, the renderer is used to generate water-color-esque patches of pigment on any object mesh. We build upon our previously created ray-traced renderer to allow different faces of a mesh to have different reflectance spectrums. To do this, we modify faces of the HalfedgeMesh during the simulation phase to hold a desired reflectance spectrum (set at the end of simulation), then propagate that spectrum into the primitives used by the renderer. Finally, we modify our ray-tracing code so the bidirectional scattering distribution function (BSDF) of “watercolored” meshes uses that custom reflectance.
 
 ### Implementation
-In our implementation, we run everything in a simulate_mesh function that takes in a mesh object. Drawing from Curtis et al., 1997, we run four main steps at each time step: *MoveWater*, *MovePigment*, *TransferPigment*, and *SimulateCapillaryFlow*. We start by generating water color patches (collections of mesh Faces that we want to watercolor) and then instantiating them with all the parameters necessary for the simulation.
+In our implementation, we run everything in a simulate_mesh function that takes in a mesh object. Drawing from Curtis et al., 1997, we run four main steps at each time step: *MoveWater*, *MovePigment*, *TransferPigment*, and *SimulateCapillaryFlow*. Code for these four methods can be found [below](#code--movewater--movepigment--transferpigment--and-simulatecapillaryflow). We start by generating water color patches (collections of mesh Faces that we want to watercolor) and then instantiating them with all the parameters necessary for the simulation.
 
 **MoveWater**: we update velocities in each direction for each cell to satisfy the 6 conditions for shallow water described in Curtis et al., 1997, and a discretization of the shallow water equations based on their grid structure is solved using Euler’s method. The first step of water movement involves updating water velocities across cell boundaries based on surrounding water velocities and cell water pressures. We store a non-negative outwards velocity in each halfedge, then update those velocities using a local coordinate system for each half edge that allows us to calculate analogs of the “horizontal” and “vertical” velocities of surrounding edges and cells.
 
@@ -86,7 +86,7 @@ RENDERING WITH A FOCUS ON REFLECTIONS](https://core.ac.uk/download/pdf/154406433
 * Evan: Modified existing project 3-1 code to render water colors instead. Designed height function and mesh-specific adaptations to the water movement simulation functions.
 * Johnathan: Implemented fluid simulation with algorithms from Curtis et al., 1997, and tweaked parameters to find optimal simulation values for most watercolor-esque results.
 
-## Code: *MoveWater*, *MovePigment*, *TransferPigment*, *SimulateCapillaryFlow*, and *Watercolor Mesh Simulation*
+## Code: *MoveWater*, *MovePigment*, *TransferPigment*, and *SimulateCapillaryFlow*
 Full project code can be found at: https://github.com/andrewdotwang/WatercolorRendering
 ### MoveWater
 ```C++
@@ -406,196 +406,6 @@ void WaterColor::simulateCapillaryFlow(std::vector<FaceIter> patch) {
     if (f->saturation > threshold) {
       f->is_wc = true;
     }
-  }
-}
-```
-### Watercolor Mesh Simulation
-```C++
-// Simulates watercolor paint spreading over a mesh.
-// NOTE: we eventually will need to have a way of specifying how
-//       the brush-strokes are specified. For now, we'll just initialize
-//       uniformly at random or maybe using the z coordinate(?) of the mesh element for testing.
-void WaterColor::simulate_mesh(GLScene::Mesh* elem) {
-  HalfedgeMesh& mesh = elem->get_underlying_mesh();
-
-  std::vector<std::vector<float>> patch_pigments;
-  patch_pigments.push_back({1.0, 0.1, 1.0});
-  patch_pigments.push_back({0.1, 1.0, 1.0});
-  patch_pigments.push_back({1.0, 1.0, 0.1});
-  patch_pigments.push_back({1.5, 0.5, 0.1});
-  patch_pigments.push_back({0.1, 1.5, 0.5});
-  patch_pigments.push_back({0.5, 0.1, 1.5});
-
-  WC_Color QUINACRIDONE_ROSE = WC_Color(Vector3D(0.22, 1.47, 0.57), Vector3D(0.05, 0.003, 0.03), 0.02, 5.5, 0.81);
-  WC_Color INDIAN_RED        = WC_Color(Vector3D(0.46, 1.07, 1.50), Vector3D(1.28, 0.38, 0.21),  0.05, 7.0, 0.40);
-  WC_Color CADMIUM_YELLOW    = WC_Color(Vector3D(0.10, 0.36, 3.45), Vector3D(0.97, 0.65, 0.007), 0.05, 3.4, 0.81);
-  WC_Color HOOKERS_GREEN     = WC_Color(Vector3D(1.62, 0.61, 1.64), Vector3D(0.01, 0.012, 0.003),0.09, 1.0, 0.41);
-  WC_Color CERULEAN_BLUE     = WC_Color(Vector3D(1.52, 0.32, 0.25), Vector3D(0.06, 0.26, 0.40),  0.01, 1.0, 0.31);
-
-  std::vector<WC_Color> all_colors = {QUINACRIDONE_ROSE, CADMIUM_YELLOW, CERULEAN_BLUE, INDIAN_RED};
-  std::vector<WC_Color> all_colors_def = all_colors;
-
-  WC_Color mesh_default = WC_Color(Vector3D(0.5, 0.5, 0.5)); // could probably get this directly from collada?
-  all_colors_def.push_back(mesh_default);
-  
-  //num of rows is num of patches, num of cols is number of colors in all_colors
-  //might adapt this in the future
-  std::vector<std::vector<float>> colors_per_patch = {{1.0, 0.0, 0.0, 0.0}, {1.0, 0.0, 0.0, 0.0}, {1.0, 0.0, 0.0, 0.0}, {0.0, 1.0, 0.0, 0.0}, {0.0, 1.0, 0.0, 0.0}, {0.0, 1.0, 0.0, 0.0}, {0.0, 0.0, 1.0, 0.0}, {0.0, 0.0, 1.0, 0.0}, {0.0, 0.0, 1.0, 0.0}, {0.0, 1.0, 1.0, 0.0}, {0.0, 0.0, 1.0, 0.0}, {0.0, 0.0, 1.0, 0.0}, {0.0, 0.0, 0.0, 1.0}, {0.0, 0.0, 0.0, 1.0}};
-
-  std::vector<float> densities;
-  std::vector<float> stains;
-  std::vector<float> grans;
-  std::vector<float> pigments_d;
-  for (WC_Color c: all_colors) {
-    densities.push_back(c.density);
-    stains.push_back(c.stain);
-    grans.push_back(c.granulation);
-    pigments_d.push_back(0.);
-  }
-
-  std::vector<std::vector<FaceIter>> patches;
-
-  StatsBuilder sb;
-  Vector3D f_cent;
-  for (int patch = 0; patch<colors_per_patch.size(); patch++) {
-
-    std::vector<FaceIter> newPatch = get_patch(mesh, 400, true);
-    patches.push_back(newPatch);
-
-
-    //need to instantiate properties of each face "cell" for simulation
-    for (FaceIter f: newPatch) {
-      f->is_wc = true; // tells the renderer to use this face's watercolor reflectance instead of the default
-
-      // initialize simulation params (below are placeholders; remove or modify however you want)
-
-      //f->wetness = (float)(random_uniform());
-      float f_h = face_height(f);
-      f->height = f_h;
-      sb.add(f_h);
-
-      //placeholder values, need to set default values
-      f->xyz_flow = Vector3D(0.0, 0.0, 0.0); //need to set initial xyz_flow velocities to actually run update_velocities()?
-      f->pressure = 1.0; //not used until we change fluid sim
-
-      f->saturation = 1.0;
-      f->saturation_new = 1.0;
-      f->capacity = 1.0; //per paper, shoud be  c = h * (c_max - c_min) + c_min
-
-      //all faces should have the same k pigments, varrying in property values
-      //using placeholders, need to modify, can follow values in paper in figure 5
-      std::vector<float> new_cpp;
-      float val;
-      for (int i = 0; i < colors_per_patch[patch].size(); i++) {
-        val = colors_per_patch[patch][i];
-        if (i < f->pigments_g.size()) {
-          val += f->pigments_g[i];
-        }
-        new_cpp.push_back(val);
-      }
-      f->pigments_g = new_cpp;
-      f->pigments_g_new = new_cpp;
-      f->density = densities;
-      f->staining_power = stains;
-      f->granulation = grans;
-      f->pigments_d = pigments_d;
-
-      HalfedgeIter& h = f->halfedge();
-      f_cent = face_centroid(f);
-      for (int i = 0; i < 3; i++) {
-        h->wc_dir = (face_to_edge(f_cent, h)).unit();
-        h->wc_mag = 0.;
-  
-        h = h->next();
-      }
-
-    }
-
-    sb.clear();
-
-    //need to get a gradient of height differences for each direction, 3 in total
-    for (FaceIter f: newPatch) {
-      HalfedgeIter& h = f->halfedge();
-      for (int i = 0; i < 3; i++) {
-        FaceIter f2 = h->twin()->face();
-
-        if (f2->is_wc) {
-          f->h_slopes[i] = (f->height - f2->height); // / (norm(f1 - f2));
-        } else {
-          f->h_slopes[i] = 0.0;
-        }
-        h = h->next();
-      }
-
-    }
-
-  }
-
-  // loop through all the patches
-  // run water simulation on each patch
-  // end result will result in each face having multiple properties of pigments
-  // find a way to set reflectance and transmittance values of the face to show true water color pigments
-  for (std::vector<FaceIter> patch : patches) {
-    int timesteps = 1000;
-    for (int i = 0; i < timesteps; i++) {
-      move_water(patch);
-      move_pigment(patch);
-      transfer_pigment(patch);
-      simulateCapillaryFlow(patch);
-    }
-  }
-  StatsBuilder sb_rgb[3];
-  for (int i = 0; i < 3; i++) {
-    sb_rgb[i] = StatsBuilder();
-  }
-
-  for (std::vector<FaceIter> patch : patches) {
-    for (int i = 0; i < 3; i++) {
-      sb_rgb[i].clear();
-    }
-    
-    for(FaceIter f : patch) {
-      float pigment_d_sum = 0.0;
-      std::vector<float> factors;
-      for (int i = 0; i < f->pigments_d.size(); i++) {
-        pigment_d_sum += f->pigments_g[i] + f->pigments_d[i];
-      }
-      float to_push;
-      float tot_pushed = 1e-5;
-      for (int i = 0; i < f->pigments_d.size(); i++) {
-        if (pigment_d_sum == 0) {
-          to_push = 0.0;
-        } else {
-          to_push = (f->pigments_g[i]+f->pigments_d[i]);//1.2;
-        }
-
-        factors.push_back(to_push);
-        tot_pushed += to_push;
-      }
-
-      // TODO: implement reflectance/transmittance layering
-      // TODO: data structure to allow simple specification of a color from the paper
-
-      std::vector<float> factors_def = factors;
-      factors_def.push_back(1.0);
-
-      Vector3D refl;
-      Vector3D trans;
-      float tot_thickness;
-      calc_comp(all_colors_def, factors_def, &tot_thickness).calc_optics(tot_thickness, &trans, &refl);
-
-      f->reflectance = refl;
-      for (int i = 0; i < 3; i++) {
-        sb_rgb[i].add(f->reflectance[i]);
-      }
-    }
-
-    Stats s_rgb[3];
-    for (int i = 0; i < 3; i++) {
-      s_rgb[i] = sb_rgb[i].calc_stats();
-      sb_rgb[i].print_stats();
-    }
-    which_patch += 1;
   }
 }
 ```

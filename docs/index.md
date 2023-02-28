@@ -83,14 +83,15 @@ RENDERING WITH A FOCUS ON REFLECTIONS](https://core.ac.uk/download/pdf/154406433
 
 ## Contributions
 * Andrew: Implemented and re-designed fluid simulation with algorithms from Curtis et al., 1997, and implemented extra features such as dry-brush effect.
-* Evan: Modified existing project 3-1 code to render water colors instead. Designed height function and mesh-specific adaptations to the water movement simulation functions.
+* Evan: Modified previous ray-tracing project code to render water colors instead. Designed height function and mesh-specific adaptations to the water movement simulation functions.
 * Johnathan: Implemented fluid simulation with algorithms from Curtis et al., 1997, and tweaked parameters to find optimal simulation values for most watercolor-esque results.
 
 ## Code: *MoveWater*, *MovePigment*, *TransferPigment*, and *SimulateCapillaryFlow*
 Full project code can be found at: https://github.com/andrewdotwang/WatercolorRendering
+
 ### MoveWater
 ```C++
-// main function for moving water in the shallow water layer
+// Main function for moving water in the shallow water layer
 void WaterColor::move_water(std::vector<FaceIter> patch) {
   update_velocities(patch);
   relax_divergence(patch);
@@ -98,7 +99,8 @@ void WaterColor::move_water(std::vector<FaceIter> patch) {
 }
 ```
 ```C++
-// updating velocities, changing velocity in each direction by random factor scaled by height differential in that direction
+// Updating velocities, changing velocity in each direction by 
+// random factor scaled by height differential in that direction
 void WaterColor::update_velocities(std::vector<FaceIter> patch) {
   for (FaceIter f: patch) {
     HalfedgeIter& h = f->halfedge();
@@ -118,27 +120,31 @@ void WaterColor::update_velocities(std::vector<FaceIter> patch) {
       // we look at each (half-)edge of each triangle. 
       // in general terms, "h" is f->halfedge(); the current half edge getting velocity updated
       //                   "u" is the velocity across the boundary
-
       // the visualization for "upper", "lower", "leftmost", and "rightmost" is as follows:
       //                    /||\                                                          |
       //        upper left / || \ upper right
-      //                  / h||  \                                                        |
+      //                  / h||  \                                                        |      
       //                  \  ||  /
       //        lower left \ || / lower right
       //                    \||/
-
-      //                   "v" is the velocity perpendicular to the boundary (i.e. in the direction of h)
+      // "v" is the velocity perpendicular to the boundary (i.e. in the direction of h)
       // in terms of mapping a halfedge mesh onto a grid,
       // we use the following defns:
 
-      // [ u_{i + .5, j} == h->wc_mag ] i.e. the velocity across the half edge we will modify
-      // [ u_{i, j}      == avg_of(f->all_h->wc_mag) proj onto f_to_h] i.e. find the component of the average
-      //                                                               exit velocity in the direction of exit from h
-      // [ u_{i+1, j}    == avg_of(f->h->twin->all_h->wc_mag) proj onto f_to_h] i.e. find the component of the 
-      //                                                                        average exit velocity of the twin 
-      //                                                                        face in the direction of exit from h's twin
-      // [ u_{i+1.5, j}  == avg of "rightmost" twin halfedge vals proj onto f_to_h]
-      // [ u_{i-.5, j}   == avg of "leftmost" halfedge vals proj onto f_to_h]
+      // [ u_{i + .5, j} == h->wc_mag ] 
+      //    i.e. the velocity across the half edge we will modify
+      
+      // [ u_{i, j} == avg_of(f->all_h->wc_mag) proj onto f_to_h] 
+      //    i.e. find the component of the average
+      //        exit velocity in the direction of exit from h
+      
+      // [ u_{i+1, j} == avg_of(f->h->twin->all_h->wc_mag) proj onto f_to_h] 
+      //    i.e. find the component of the 
+      //        average exit velocity of the twin 
+      //        face in the direction of exit from h's twin
+      
+      // [ u_{i+1.5, j} == avg of "rightmost" twin halfedge vals proj onto f_to_h]
+      // [ u_{i-.5, j} == avg of "leftmost" halfedge vals proj onto f_to_h]
 
       // [ u_{i+.5,j-x} == avg of "lower" halfedge vels proj onto f_to_h]
       // [ v_{i+.5,j-x} == avg of "lower" halfedge vels proj onto h]
@@ -176,7 +182,8 @@ void WaterColor::update_velocities(std::vector<FaceIter> patch) {
 
         u_ij = (up_l_x + lo_l_x + h->wc_mag)/3.;
         u_ip5j = h->wc_mag;
-        u_ip1j = (up_r_x + lo_r_x - t->wc_mag)/3.; // subtract wc_mag bc it is in the opposite direction
+        // subtract wc_mag bc it is in the opposite direction
+        u_ip1j = (up_r_x + lo_r_x - t->wc_mag)/3.; 
 
         u_ip5jp5 = (up_l_x + up_r_x)/2.;
         u_ip5jm5 = (lo_l_x + lo_r_x)/2.;
@@ -192,7 +199,6 @@ void WaterColor::update_velocities(std::vector<FaceIter> patch) {
         FaceIter f2 = h->twin()->face();
 
         h->new_wc_mag = max(0.0001f, (float)(u_ip5j + dt * (A - (mu * B) + f->pressure - f2->pressure - kappa * u_ip5j)));
-        //NOTE: might be better to store updates in a "new" variable then apply them all when done.
         tot_flow += h->new_wc_mag;
 
         h = h->next();
@@ -201,7 +207,8 @@ void WaterColor::update_velocities(std::vector<FaceIter> patch) {
       if (tot_flow > 1.) {
         h = f->halfedge();
         for (int edge = 0; edge < 3; edge ++) {
-          h->new_wc_mag = max(0.0001f, (float)(h->new_wc_mag / tot_flow) - 0.001f); // we want positive numbers that add up to a little less than 1
+          // we want positive numbers that add up to a little less than 1
+          h->new_wc_mag = max(0.0001f, (float)(h->new_wc_mag / tot_flow) - 0.001f);
           h = h->next();
         }
       }
@@ -217,11 +224,12 @@ void WaterColor::update_velocities(std::vector<FaceIter> patch) {
 }
 ```
 ```C++
-//relaxing the divergence of the velocity field
+// Relaxing the divergence of the velocity field
 void WaterColor::relax_divergence(std::vector<FaceIter> patch) {
-  // instead of the edge-centric mapping we did in update_velocities,
+  // Instead of the edge-centric mapping we did in update_velocities,
   // in this function we have a much simpler conceptual approach. 
-  // delta is a scaled form of the total divergence, which is simply
+  
+  // Delta is a scaled form of the total divergence, which is simply
   // the sum of wc_mag for a given face
   int t = 0;
   float tau = 0.01;
@@ -239,8 +247,9 @@ void WaterColor::relax_divergence(std::vector<FaceIter> patch) {
         tot_div += h->wc_mag;
         h = h->next();
       }
-      delta = - xi * tot_div; //NOTE there is a typo in the paper, if you look at  "Realistic animation of liquids." p7-8,
-                              // which Curtis '97 cites, Curtis '97  are missing a minus sign...
+      // NOTE there is a typo in the paper, at  "Realistic animation of liquids." p7-8,
+      // which Curtis '97 cites, Curtis '97  are missing a minus sign...
+      delta = - xi * tot_div; 
 
       f->pressure = max(f->pressure + delta, 0.f);
       h = f->halfedge();
@@ -254,7 +263,8 @@ void WaterColor::relax_divergence(std::vector<FaceIter> patch) {
       if (tot_flow > 1.) {
         h = f->halfedge();
         for (int edge = 0; edge < 3; edge ++) {
-          h->new_wc_mag = max(0.0001f, (float)(h->new_wc_mag / tot_flow) - 0.001f); // we want positive numbers that add up to a little less than 1
+          // we want positive numbers that add up to a little less than 1
+          h->new_wc_mag = max(0.0001f, (float)(h->new_wc_mag / tot_flow) - 0.001f); 
           h = h->next();
         }
       }
@@ -276,8 +286,7 @@ void WaterColor::relax_divergence(std::vector<FaceIter> patch) {
 }
 ```
 ```C++
-//edge darkening, paper applies a gausian blur on water mask (faces with is_wc)
-//can try another brute force way of only dealing with edge faces with is_wc
+// Edge darkening, paper applies a gausian blur on water mask (faces with is_wc)
 void WaterColor::flow_outward(std::vector<FaceIter> patch) {
   float remove_factor = 0.1; //tweak parameters??
 
@@ -299,8 +308,11 @@ void WaterColor::flow_outward(std::vector<FaceIter> patch) {
 ```
 ### MovePigment
 ```C++
-//distribution of pigments from cell (face) to neighbors according to the rate of fluid movement out of the cell
-//velocity in different directions result in different amounts of pigment movement => impacted by height differential
+// Distribution of pigments from cell (face) to neighbors according 
+// to the rate of fluid movement out of the cell
+
+// Velocity in different directions result in different 
+// amounts of pigment movement => impacted by height differential
 void WaterColor::move_pigment(std::vector<FaceIter> patch) {
   float ts, dt;
   get_timescale(patch, &ts, &dt);
@@ -350,7 +362,8 @@ void WaterColor::move_pigment(std::vector<FaceIter> patch) {
 ```
 ### TransferPigment
 ```C++
-//at each step of simulation, pigment is absorbed into the paper at certain rates, but also back into fluid at other rates
+// At each step of simulation, pigment is absorbed into the paper at certain rates, 
+// but also back into fluid at other rates
 void WaterColor::transfer_pigment(std::vector<FaceIter> patch) {
   for (FaceIter f: patch) {
     if (f->is_wc) {
@@ -372,7 +385,7 @@ void WaterColor::transfer_pigment(std::vector<FaceIter> patch) {
 ```
 ### SimulateCapillaryFlow
 ```C++
-//simulates how paper absorbs water and increases the water color area
+// Simulates how paper absorbs water and increases the water color area
 void WaterColor::simulateCapillaryFlow(std::vector<FaceIter> patch) {
   float absorbtion_rate = 1.0; //tweak this parameter?
   float threshold = 0.5; //tweak this parameter?
